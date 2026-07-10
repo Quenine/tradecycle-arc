@@ -8,4 +8,4 @@ TradeCycle is a USDC-powered SME working-capital platform on Arc. It lets operat
 
 ## Problem
 
-SMEs often need short-cycle working capital to fulfill orders, buy inventory, produce goods, or complete trade commitments. Traditional financing is slow, opaque, and hard to access for operators without an established credit file. Investors also lack a clean
+SMEs often need short-cycle working capital to fulfill orders, buy inventory, produce goods,
