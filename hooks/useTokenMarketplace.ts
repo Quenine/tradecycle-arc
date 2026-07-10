@@ -36,7 +36,6 @@ type RawMarketOrder = {
   6?: boolean
 }
 
-const BPS_DENOMINATOR = 10_000n
 const SHARE_TOKEN_SCALE = 10n ** BigInt(SHARE_TOKEN_DECIMALS)
 
 const GAS = {
@@ -48,8 +47,21 @@ const GAS = {
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
+
+type WriteContractFn = (params: {
+  address: `0x${string}`
+  abi: readonly unknown[]
+  functionName: string
+  args?: readonly unknown[]
+  gas?: bigint
+  chainId?: number
+}) => Promise<`0x${string}`>
+
+type PublicClientLike = {
+  waitForTransactionReceipt: (params: { hash: `0x${string}` }) => Promise<{ status: "success" | "reverted" }>
+}
 async function doApprove(
-  wca: any, pc: any,
+  wca: WriteContractFn, pc: PublicClientLike,
   token: `0x${string}`, spender: `0x${string}`,
 ) {
   const hash = await wca({
@@ -63,7 +75,7 @@ async function doApprove(
   await sleep(600)
 }
 
-async function doWrite(wca: any, pc: any, params: {
+async function doWrite(wca: WriteContractFn, pc: PublicClientLike, params: {
   address: `0x${string}`
   abi: readonly unknown[]
   functionName: string
@@ -233,7 +245,6 @@ export function useMarketBuy() {
     tokenAddress: string,
     usdcBudget: string,
     orders: MarketOrder[],
-    tradingFeeBps: bigint,
   ): Promise<{ filled: number; spent: number; txHashes: string[] }> {
     if (!publicClient || !address) throw new Error("Wallet not connected")
     await ensureRequiredNetwork()
@@ -260,7 +271,6 @@ export function useMarketBuy() {
       if (fillAmt === 0n) continue
 
       const grossCost = (fillAmt * order.pricePerToken) / SHARE_TOKEN_SCALE
-      const fee = (grossCost * tradingFeeBps) / BPS_DENOMINATOR
       const totalCost = grossCost
 
       const tx = await doWrite(writeContractAsync, publicClient, {

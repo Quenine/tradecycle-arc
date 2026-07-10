@@ -25,7 +25,7 @@ const appChain = defineChain({
   testnet: NETWORK.isTestnet,
 })
 
-const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "fundr-local"
+const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "tradecycle-local"
 
 const connectors = connectorsForWallets(
   [
@@ -42,7 +42,7 @@ const connectors = connectorsForWallets(
     },
   ],
   {
-    appName: "FundR",
+    appName: "TradeCycle",
     projectId: walletConnectProjectId,
   },
 )

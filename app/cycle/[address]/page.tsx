@@ -95,6 +95,10 @@ export default function CycleDetailPage() {
     return Math.max(1, Math.min(10, base + (colRatio >= 0.2 ? -1 : colRatio >= 0.1 ? 0 : 1)))
   })()
 
+  const canDefault = useMemo(() => {
+    return cycle.isActive && (Number(cycle.startTime) + Number(cycle.duration)) < Math.floor(Date.now() / 1000)
+  }, [cycle.isActive, cycle.startTime, cycle.duration])
+
   async function addToken() {
     if (typeof window === "undefined" || !(window as any).ethereum || !cycle.tokenAddress) return
     try {
@@ -192,10 +196,6 @@ export default function CycleDetailPage() {
   // Correct yield calculation: uses netROI which already accounts for fees
   const estYield   = netROI > 0 ? invAmt * (netROI / 100) : 0
   const netBack    = invAmt + estYield
-  const canDefault = useMemo(() => {
-    return cycle.isActive && (Number(cycle.startTime) + Number(cycle.duration)) < Math.floor(Date.now() / 1000)
-  }, [cycle.isActive, cycle.startTime, cycle.duration])
-
   // Expected revenue from on-chain
   const revUSD = stableAmountToNumber(cycle.expectedRevenue)
 
@@ -223,7 +223,7 @@ export default function CycleDetailPage() {
                   <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-dim)" }}>
                     Token: <span style={{ color: "var(--gold)" }}>{cycle.cycleSymbol}</span>
                     {operatorAddress && (
-                      <> · Operator: <a href={`${NETWORK.blockExplorer}/address/${operatorAddress}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-muted)", textDecoration: "none" }}>{operatorAddress.slice(0,8)}…{operatorAddress.slice(-4)} ↗</a></>
+                      <> · Operator: <a href={`${NETWORK.blockExplorer}/address/${operatorAddress}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-muted)", textDecoration: "none" }}>{operatorAddress.slice(0,8)}…{operatorAddress.slice(-4)} ↗</a> · <Link href={`/credit-passport/${operatorAddress}`} style={{ color: "var(--gold)", textDecoration: "none" }}>Credit Passport</Link></>
                     )}
                   </p>
                 </div>

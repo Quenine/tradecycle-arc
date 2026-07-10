@@ -5,6 +5,15 @@ import { CONTRACTS, MILESTONE_LABELS, CYCLE_STATES } from "@/constants/contracts
 import { PRODUCTION_CYCLE_ABI, CYCLE_SHARE_TOKEN_ABI, YIELD_ORACLE_ABI, VERIFIER_REGISTRY_ABI } from "@/contracts/abis"
 import { stableAmountToNumber } from "@/lib/token-units"
 
+type OracleEstimateResult = {
+  expectedRevenue: bigint
+  estimatedCost: bigint
+  estimatedProfit: bigint
+  estimatedROI: bigint
+  riskScore: number
+  exists: boolean
+}
+
 export interface CycleData {
   address: string
   cycleName: string; cycleSymbol: string; category: string; location: string; description: string
@@ -17,6 +26,7 @@ export interface CycleData {
   grossROI: number    // (expectedRevenue - capital) / capital * 100
   netROI:   number    // after protocol + reserve fees
   stateId: number; stateName: string
+  operator: string
   isFunding: boolean; isActive: boolean; isHarvestSubmitted: boolean; isDistributed: boolean; isDefaulted: boolean
   tokenAddress: string; tokenTotalSupply: bigint
   milestones: { id: number; label: string; pct: number; description: string; released: boolean; quorumReached: boolean; approvalCount: number }[]
@@ -50,6 +60,7 @@ export function useCycleData(cycleAddress: string): CycleData {
       { ...cc, functionName: "milestoneReleased", args: [1] as const }, // 17
       { ...cc, functionName: "milestoneReleased", args: [2] as const }, // 18
       { ...cc, functionName: "milestoneReleased", args: [3] as const }, // 19
+      { ...cc, functionName: "operator" },            // 20
     ],
     query: { enabled: !!cycleAddress, refetchInterval: 8000 },
   })
@@ -95,7 +106,7 @@ export function useCycleData(cycleAddress: string): CycleData {
   const profitAfterFees = grossProfit * (1 - (reservePct + protocolPct) / 100)
   const netROI        = capUSD > 0 && profitAfterFees > 0 ? Math.round((profitAfterFees / capUSD) * 100) : 0
 
-  const oracleRaw = oracleData?.[0]?.result as any
+  const oracleRaw = oracleData?.[0]?.result as OracleEstimateResult | undefined
   const oracle = oracleRaw?.exists
     ? {
         revenue: oracleRaw.expectedRevenue as bigint,
@@ -143,6 +154,7 @@ export function useCycleData(cycleAddress: string): CycleData {
     tokenTotalSupply:   (tokenData?.[0]?.result as bigint) ?? 0n,
     stateId,
     stateName:          CYCLE_STATES[stateId] ?? "UNKNOWN",
+    operator:           (data?.[20]?.result as string) ?? "",
     isFunding:          stateId === 0,
     isActive:           stateId === 1,
     isHarvestSubmitted: stateId === 2,

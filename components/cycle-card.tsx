@@ -37,10 +37,9 @@ export default function CycleCard({ address }: { address: string }) {
   const hasROI     = cycle.netROI > 0 || cycle.grossROI > 0
 
   return (
-    <Link href={`/cycle/${address}`} style={{ textDecoration: "none" }}>
-      <div
+    <div
         className="card"
-        style={{ padding: 24, cursor: "pointer", transition: "border-color 0.2s, transform 0.15s", display: "flex", flexDirection: "column", gap: 14 }}
+        style={{ padding: 24, transition: "border-color 0.2s, transform 0.15s", display: "flex", flexDirection: "column", gap: 14 }}
         onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(201,168,76,0.35)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)" }}
         onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)" }}
       >
@@ -48,8 +47,8 @@ export default function CycleCard({ address }: { address: string }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>{cycle.category}</p>
-            <h3 style={{ fontSize: 17, fontFamily: "var(--font-display)", fontWeight: 400, color: "var(--text-primary)", lineHeight: 1.2 }}>{cycle.cycleName || "Untitled cycle"}</h3>
-            {cycle.location && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>📍 {cycle.location}</p>}
+            <Link href={`/cycle/${address}`} style={{ textDecoration: "none" }}><h3 style={{ fontSize: 17, fontFamily: "var(--font-display)", fontWeight: 400, color: "var(--text-primary)", lineHeight: 1.2 }}>{cycle.cycleName || "Untitled cycle"}</h3></Link>
+            {cycle.location && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{cycle.location}</p>}
           </div>
           <span className={`badge ${STATE_BADGE[cycle.stateId] ?? "badge-funding"}`}>
             {STATE_LABEL[cycle.stateId] ?? "Unknown"}
@@ -73,30 +72,30 @@ export default function CycleCard({ address }: { address: string }) {
             Target: ${cycle.capitalRequiredUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
         </div>
-
+        {cycle.operator && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+            <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-dim)" }}>Operator {cycle.operator.slice(0, 6)}...{cycle.operator.slice(-4)}</span>
+            <Link href={`/credit-passport/${cycle.operator}`} style={{ fontSize: 11, color: "var(--gold)", textDecoration: "none", flexShrink: 0 }}>View Credit Passport</Link>
+          </div>
+        )}
         {/* Stats */}
-        <div style={{ display: "flex", gap: 20, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-          <div>
-            <p className="stat-label" style={{ marginBottom: 2 }}>Net ROI</p>
-            <p style={{ fontSize: 22, fontFamily: "var(--font-display)", color: hasROI ? "var(--emerald)" : "var(--text-muted)" }}>
-              {displayROI}
-            </p>
-          </div>
-          <div>
-            <p className="stat-label" style={{ marginBottom: 2 }}>Duration</p>
-            <p style={{ fontSize: 22, fontFamily: "var(--font-display)", color: "var(--text-primary)" }}>
-              {cycle.durationDays > 0 ? `${cycle.durationDays}d` : "—"}
-            </p>
-          </div>
-          <div style={{ marginLeft: "auto", textAlign: "right" }}>
-            <p className="stat-label" style={{ marginBottom: 2 }}>Risk</p>
-            <p style={{ fontSize: 13, fontFamily: "var(--font-mono)", color: riskColor(riskScore) }}>
-              ● {RISK_LABELS[riskScore] ?? `${riskScore}/10`}
-            </p>
-            {!cycle.oracle && <p style={{ fontSize: 9, color: "var(--text-dim)", fontFamily: "var(--font-mono)", marginTop: 2 }}>estimated</p>}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, paddingTop: 12, borderTop: cycle.operator ? "none" : "1px solid var(--border)" }}>
+          {[
+            ["Capital required", `$${cycle.capitalRequiredUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+            ["Expected revenue", cycle.expectedRevenue > 0n ? `$${Number(cycle.expectedRevenue / 1000000n).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "Not available"],
+            ["Net ROI", displayROI],
+            ["Duration", cycle.durationDays > 0 ? `${cycle.durationDays}d` : "-"],
+          ].map(([label, value]) => (
+            <div key={label} style={{ background: "var(--bg-surface)", borderRadius: 8, padding: 12 }}>
+              <p className="stat-label" style={{ marginBottom: 4 }}>{label}</p>
+              <p style={{ fontSize: 16, fontFamily: "var(--font-display)", color: label === "Net ROI" && hasROI ? "var(--emerald)" : "var(--text-primary)" }}>{value}</p>
+            </div>
+          ))}
+          <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, paddingTop: 4 }}>
+            <span style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: riskColor(riskScore) }}>Risk: {RISK_LABELS[riskScore] ?? `${riskScore}/10`}{!cycle.oracle ? " (estimated)" : ""}</span>
+            <Link href={`/cycle/${address}`} className="btn-primary" style={{ textDecoration: "none", padding: "8px 12px", fontSize: 12 }}>Open cycle</Link>
           </div>
         </div>
       </div>
-    </Link>
   )
 }

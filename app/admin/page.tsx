@@ -141,7 +141,6 @@ export default function AdminPage() {
   const currentMode = Number(data?.[2]?.result ?? 0)
   const reserveBal = stableAmountToNumber((data?.[3]?.result as bigint) ?? 0n)
   const treasuryBal = stableAmountToNumber((data?.[4]?.result as bigint) ?? 0n)
-  const liquidityManagerBal = stableAmountToNumber((liquidityManagerData?.[0]?.result as bigint) ?? 0n)
   const currentManagerVault = (liquidityManagerData?.[1]?.result as string) ?? ""
   const currentDexFactory = (liquidityManagerData?.[2]?.result as string) ?? ""
   const currentDexRouter = (liquidityManagerData?.[3]?.result as string) ?? ""

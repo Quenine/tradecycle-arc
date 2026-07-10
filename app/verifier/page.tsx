@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useAccount, useReadContracts, usePublicClient } from "wagmi"
 import { decodeEventLog } from "viem"
@@ -11,7 +12,7 @@ import { FACTORY_V2_ABI } from "@/contracts/abis-v2"
 import ConnectWallet from "@/components/connect-wallet"
 import { useWatchedWrite } from "@/hooks/useWatchedWrite"
 import { parseStableAmount, stableAmountToNumber } from "@/lib/token-units"
-import { getEvidenceFiles, parseEvidenceManifest, resolveEvidenceUrl } from "@/lib/evidence"
+import { getEvidenceFiles, resolveEvidenceUrl } from "@/lib/evidence"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 const ZERO   = "0x0000000000000000000000000000000000000000" as `0x${string}`
@@ -77,8 +78,7 @@ function EvidenceModal({ ev, onClose }: { ev: EvidenceCID; onClose: () => void }
         )}
 
         {isImage && (
-          <img src={url} alt="Evidence" style={{ width:"100%", borderRadius:10, marginBottom:12, maxHeight:420, objectFit:"contain", background:"#000" }}
-            onError={e => { (e.target as HTMLImageElement).alt = "Image failed to load — open directly"; }} />
+          <Image src={url} alt="Evidence" width={960} height={640} unoptimized style={{ width:"100%", height:"auto", borderRadius:10, marginBottom:12, maxHeight:420, objectFit:"contain", background:"#000" }} />
         )}
         {isVideo && (
           <video src={url} controls style={{ width:"100%", borderRadius:10, marginBottom:12 }} />
@@ -154,12 +154,11 @@ function useEvidenceCIDs(cycleAddress: string): EvidenceCID[] {
 }
 
 // ── Per-cycle approval panel ──────────────────────────────────────────────────
-function CyclePanel({ cycleAddr, wallet, isVerifier, onApprove, onToast }: {
+function CyclePanel({ cycleAddr, wallet, isVerifier, onApprove }: {
   cycleAddr:  string
   wallet:     `0x${string}` | undefined
   isVerifier: boolean
   onApprove:  (cycle: string, milestone: number) => Promise<void>
-  onToast:    (msg: string, type: "success"|"error") => void
 }) {
   const ca  = cycleAddr as `0x${string}`
   const w   = wallet ?? ZERO
@@ -516,7 +515,7 @@ export default function VerifierPage() {
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 {allCycles.map(addr => (
                   <CyclePanel key={addr} cycleAddr={addr} wallet={address} isVerifier={isVerifier}
-                    onApprove={handleApprove} onToast={showToast} />
+                    onApprove={handleApprove} />
                 ))}
               </div>
             )}

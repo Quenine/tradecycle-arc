@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/operator",     label: "Operators" },
   { href: "/verifier",     label: "Verify" },
   { href: "/faucet",       label: "Faucet", highlight: true },
+  { href: "/demo",         label: "Demo" },
   { href: "/how-it-works", label: "Docs" },
   { href: "/stats",        label: "Stats" },
   { href: "/admin",        label: "Admin" },
@@ -80,7 +81,7 @@ export default function Navbar() {
               color: "var(--text-primary)",
             }}
           >
-            FundR
+            TradeCycle
           </span>
         </Link>
 

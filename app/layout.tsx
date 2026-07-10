@@ -5,11 +5,11 @@ import "./globals.css"
 import { Web3Provider } from "@/providers/web3-provider"
 
 export const metadata: Metadata = {
-  title: "FundR - Real-World Yield Protocol",
-  description: "Invest in real production cycles - agriculture, trade finance, commodities - with milestone-gated capital release and on-chain yield distribution.",
+  title: "TradeCycle - USDC milestone finance for SMEs on Arc",
+  description: "USDC milestone finance for SME production and trade cycles on Arc Testnet.",
   openGraph: {
-    title: "FundR - Real-World Yield Protocol",
-    description: "Decentralised infrastructure where real economic activity becomes investable on-chain.",
+    title: "TradeCycle - USDC milestone finance for SMEs on Arc",
+    description: "TradeCycle connects SME operators, investors, and verifiers for milestone-based USDC finance on Arc.",
     type: "website",
   },
 }

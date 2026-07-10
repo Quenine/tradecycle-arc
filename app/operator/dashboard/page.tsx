@@ -4,9 +4,9 @@ import { useState, useRef } from "react"
 import { useAccount, useReadContracts } from "wagmi"
 import Link from "next/link"
 import Navbar from "@/components/navbar"
-import { CONTRACTS, NETWORK, MILESTONE_LABELS } from "@/constants/contracts"
+import { CONTRACTS, NETWORK } from "@/constants/contracts"
 import { FACTORY_V2_ABI } from "@/contracts/abis-v2"
-import { PRODUCTION_CYCLE_ABI, ERC20_ABI, VERIFIER_REGISTRY_ABI, COLLATERAL_VAULT_ABI } from "@/contracts/abis"
+import { PRODUCTION_CYCLE_ABI, VERIFIER_REGISTRY_ABI, COLLATERAL_VAULT_ABI } from "@/contracts/abis"
 import ConnectWallet from "@/components/connect-wallet"
 import { useWatchedWrite } from "@/hooks/useWatchedWrite"
 import { stableAmountToNumber } from "@/lib/token-units"
@@ -232,11 +232,9 @@ function CyclePanel({ cycleAddr, wallet, globalToast }: {
   const raisedRaw = (data?.[4]?.result as bigint)   ?? 0n
   const durSecs   = (data?.[5]?.result as bigint)   ?? 0n
   const startT    = Number(data?.[6]?.result        ?? 0n)
-  const colAmt    = (data?.[7]?.result as bigint)   ?? 0n
   const settlementRaw = (data?.[8]?.result as bigint) ?? 0n
   const capUSD    = stableAmountToNumber(capRaw)
   const raisedUSD = stableAmountToNumber(raisedRaw)
-  const colUSD    = stableAmountToNumber(colAmt)
   const settlementUSD = stableAmountToNumber(settlementRaw)
   const progress  = capUSD > 0 ? Math.min(100, Math.round((raisedUSD / capUSD) * 100)) : 0
   const isExpired = Math.floor(Date.now() / 1000) > startT + Number(durSecs)

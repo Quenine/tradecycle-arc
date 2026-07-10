@@ -5,11 +5,11 @@ import Navbar from "@/components/navbar"
 import { PROTOCOL_FEES } from "@/constants/contracts"
 
 const STEPS = [
-  { n: "01", icon: "1", title: "Operator applies and deposits collateral", body: "A real business applies to become an operator, defines the revenue path for its cycle, and deposits USDC collateral before deployment.", color: "var(--gold)" },
-  { n: "02", icon: "2", title: "Investors fund the cycle", body: "The cycle contract accepts USDC until the capital target is reached. Investors immediately receive cycle-share tokens representing their claim on principal plus yield.", color: "var(--emerald)" },
-  { n: "03", icon: "3", title: "Verifiers approve milestones", body: "Staked verifiers review evidence packages submitted by the operator. Once quorum is reached, the operator can release each capital tranche in sequence.", color: "#6495ED" },
-  { n: "04", icon: "4", title: "Operator returns capital plus profit", body: "After the real-world business completes its cycle, the operator repays the contract and triggers distribution. Profit is routed to the treasury, reserve pool, verifiers, and investors according to protocol rules.", color: "var(--gold)" },
-  { n: "05", icon: "5", title: "Investors withdraw principal plus yield", body: "Once a cycle is distributed, any investor can withdraw. The protocol burns the investor's cycle-share tokens and returns principal plus net profit.", color: "var(--emerald)" },
+  { n: "01", icon: "1", title: "SME operator applies and deposits collateral", body: "An SME applies as an operator, defines the production or trade cycle, and deposits USDC collateral before launch.", color: "var(--gold)" },
+  { n: "02", icon: "2", title: "Investors fund the cycle", body: "The cycle contract accepts USDC until the target is reached. Investors receive cycle tokens representing their position in the cycle.", color: "var(--emerald)" },
+  { n: "03", icon: "3", title: "Verifiers approve milestones", body: "Staked verifiers review operator evidence. Once quorum is reached, the operator can release the next capital tranche.", color: "#6495ED" },
+  { n: "04", icon: "4", title: "Operator repays the cycle", body: "After the real-world cycle completes, the operator repays the contract and triggers distribution. Settlement routes funds to investors, verifiers, treasury, and reserves according to protocol rules.", color: "var(--gold)" },
+  { n: "05", icon: "5", title: "Investors withdraw after settlement", body: "Once a cycle is distributed, investors withdraw from Portfolio. The protocol burns cycle tokens and returns principal plus net profit.", color: "var(--emerald)" },
 ]
 
 export default function HowItWorksPage() {
@@ -19,9 +19,9 @@ export default function HowItWorksPage() {
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "80px 32px" }}>
         <div style={{ textAlign: "center", marginBottom: 72 }}>
           <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--gold)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>Documentation</p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,5vw,52px)", fontWeight: 400, lineHeight: 1.1, marginBottom: 20 }}>How FundR works</h1>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,5vw,52px)", fontWeight: 400, lineHeight: 1.1, marginBottom: 20 }}>How TradeCycle works</h1>
           <p style={{ fontSize: 16, color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 600, margin: "0 auto" }}>
-            FundR is a milestone-gated, verifier-accountable, automatically-distributing real-world yield protocol. Capital flows from global investors to real production businesses and back entirely on-chain.
+            TradeCycle is USDC milestone finance for SME production and trade cycles on Arc. Investors fund a cycle, verifiers approve milestone releases, and repayment is distributed automatically.
           </p>
         </div>
 
@@ -67,8 +67,8 @@ export default function HowItWorksPage() {
           {[
             { icon: "LOCK", title: "Operator collateral", desc: "Operators lock USDC before creating a cycle. If they default, the protocol can slash collateral and redirect value toward investors." },
             { icon: "RISK", title: "Verifier stake and slashing", desc: "Verifiers stake USDC to approve milestones. Fraudulent approvals can be penalised, creating real accountability." },
-            { icon: "SAFE", title: "Non-custodial escrow", desc: "Investor capital is locked inside the cycle smart contract, not held by FundR." },
-            { icon: "DATA", title: "On-chain oracle", desc: "Yield estimates are stored on-chain at cycle creation time and remain auditable for anyone reviewing the deal." },
+            { icon: "SAFE", title: "Non-custodial escrow", desc: "Investor capital is locked inside the cycle smart contract, not held by TradeCycle." },
+            { icon: "DATA", title: "On-chain oracle", desc: "Cycle terms are stored on-chain at creation time and remain auditable for anyone reviewing the operator credit passport." },
           ].map((s) => (
             <div key={s.title} style={{ display: "flex", gap: 16, padding: "16px 0", borderBottom: "1px solid var(--border)" }}>
               <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1.8, color: "var(--gold)", minWidth: 40 }}>{s.icon}</span>
@@ -81,8 +81,8 @@ export default function HowItWorksPage() {
         </div>
 
         <div style={{ textAlign: "center", display: "flex", gap: 14, justifyContent: "center" }}>
-          <Link href="/" className="btn-primary" style={{ textDecoration: "none" }}>Browse live cycles -&gt;</Link>
-          <Link href="/faucet" className="btn-ghost" style={{ textDecoration: "none" }}>Get testnet USDC</Link>
+          <Link href="/" className="btn-primary" style={{ textDecoration: "none" }}>Browse Cycles -&gt;</Link>
+          <Link href="/faucet" className="btn-ghost" style={{ textDecoration: "none" }}>Get Arc Testnet USDC</Link>
         </div>
       </div>
     </div>

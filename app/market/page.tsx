@@ -2,11 +2,11 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { formatUnits, parseUnits } from "viem"
+import { parseUnits } from "viem"
 import { useAccount, useReadContracts } from "wagmi"
 import Navbar from "@/components/navbar"
 import ConnectWallet from "@/components/connect-wallet"
-import { CONTRACTS, NETWORK, SHARE_TOKEN_DECIMALS, STABLECOIN } from "@/constants/contracts"
+import { CONTRACTS, NETWORK, SHARE_TOKEN_DECIMALS } from "@/constants/contracts"
 import { FACTORY_V2_ABI } from "@/contracts/abis-v2"
 import { CYCLE_SHARE_TOKEN_ABI, PRODUCTION_CYCLE_ABI } from "@/contracts/abis"
 import { useBuyOrder, useCancelOrder, useCreateSellOrder, useMarketOrders, type MarketOrder } from "@/hooks/useTokenMarketplace"

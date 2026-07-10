@@ -29,7 +29,7 @@ export default function FaucetPage() {
           <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--gold-glow)", border: "1px solid var(--border-gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px", color: "var(--gold)" }}>$</div>
           <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--gold)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>{NETWORK.name} funding</p>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 400, marginBottom: 12 }}>Get Arc USDC</h1>
-          <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7 }}>Arc uses USDC for gas and app transfers. Use Circle's faucet for testnet funds, then return here to invest, verify, or launch cycles.</p>
+          <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7 }}>Arc uses USDC for gas and app transfers. Use Circle&apos;s faucet for testnet funds, then return here to invest, verify, or launch cycles.</p>
         </div>
 
         {!address ? (
