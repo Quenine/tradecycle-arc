@@ -1,0 +1,19 @@
+{
+  "MockUSDCFaucet": "",
+  "stablecoin": "0x3600000000000000000000000000000000000000",
+  "stablecoinSymbol": "USDC",
+  "stablecoinDecimals": 6,
+  "minimumVerifierStake": "10000000",
+  "VerifierRegistry": "0x22Fbd143994612b24B4FEC5f2282736d12CC74AF",
+  "CollateralVault": "0xcF13420d6677aAF055E4D7B346F9c16747e41DA5",
+  "ReservePool": "0xb0f77421a574ec2509632EAa6a87804a2Ed44476",
+  "ProtocolTreasury": "0xAE901377C440be567BcbDB6C0C8e910a18Fd6803",
+  "YieldOracle": "0xB47ad3B29b420fD32C77e39AFeAC55b045B5e441",
+  "LiquidityVault": "0xFC2CE1a6206d3e8Fd4F2C8bC3649f303AC2459B9",
+  "LiquidityManager": "0x2BDF6D2D3bcc1DA32D02c3771030AE176C3bAFF6",
+  "CycleTokenMarketplaceV2": "0x7063938d47A0bB7f9f1CC305c82450715266b1D5",
+  "ProductionCycleFactoryV2": "0xB60522F3A62a1a092019E615722788F1C4af6319",
+  "deployer": "0x2dc67b9c6A9B431AA9C5e898B7137DCE0a45A660",
+  "deployedAt": "2026-05-21T19:53:22.651Z",
+  "network": "arcTestnet"
+}
