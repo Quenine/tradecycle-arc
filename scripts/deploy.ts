@@ -102,6 +102,7 @@ async function main() {
   const factory = await f2.getAddress()
 
   await (await vr.setFactory(factory)).wait()
+  await (await cv.setFactory(factory)).wait()
   await (await lm.setFactory(factory)).wait()
   await (await lm.setVault(liquidityVault)).wait()
   await (await lv.setLiquidityManager(liquidityManager)).wait()
