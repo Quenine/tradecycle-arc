@@ -6,6 +6,7 @@ import Link from "next/link"
 import Navbar from "@/components/navbar"
 import { usePortfolio } from "@/hooks/usePortfolio"
 import { useWatchedWrite } from "@/hooks/useWatchedWrite"
+import { useMarketOrders } from "@/hooks/useTokenMarketplace"
 import { getErrorMessage } from "@/lib/error-message"
 import { PRODUCTION_CYCLE_ABI } from "@/contracts/abis"
 import { NETWORK } from "@/constants/contracts"
@@ -23,6 +24,8 @@ export default function PortfolioPage() {
   const { address } = useAccount()
   const { positions, totalInvestedUSD, activeCount, completedCount, defaultedCount, isLoading } = usePortfolio()
   const { send } = useWatchedWrite()
+  const { orders: marketplaceOrders } = useMarketOrders()
+  const myListings = marketplaceOrders.filter(order => address && order.seller.toLowerCase() === address.toLowerCase())
 
   const [busyAddr, setBusyAddr] = useState("")
   const [toast, setToast] = useState<{ msg: string; type: "success"|"error"; hash?: string }|null>(null)
@@ -148,7 +151,7 @@ export default function PortfolioPage() {
                           </button>
                         ) : (
                           <Link href={`/cycle/${p.cycleAddress}`} style={{ fontSize:12, color:"var(--gold)", textDecoration:"none", padding:"5px 12px", border:"1px solid rgba(201,168,76,0.3)", borderRadius:6 }}>
-                            View →
+                            Trade / view →
                           </Link>
                         )}
                       </td>
@@ -160,6 +163,10 @@ export default function PortfolioPage() {
           </div>
         )}
 
+        <div className="card" style={{ padding:20, marginTop:16 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", gap:12, flexWrap:"wrap", alignItems:"center" }}><div><h2 style={{ fontSize:16, marginBottom:5 }}>Listed positions</h2><p style={{ fontSize:12, color:"var(--text-muted)", lineHeight:1.6 }}>Tokens in active sell orders are held in marketplace escrow, not missing from your portfolio. Cancel a listing to return the remaining tokens before settlement redemption.</p></div><Link href="/market" className="btn-ghost" style={{ textDecoration:"none" }}>Manage listings</Link></div>
+          {myListings.length === 0 ? <p style={{ fontSize:12, color:"var(--text-dim)", marginTop:14 }}>No open marketplace listings for this wallet.</p> : <div className="table-scroll" style={{ marginTop:14 }}><table><thead><tr><th>Token</th><th>Escrowed</th><th>Ask</th><th>Action</th></tr></thead><tbody>{myListings.map(order => <tr key={order.id}><td>{order.token.slice(0,8)}...{order.token.slice(-4)}</td><td>{order.amountFormatted.toLocaleString()}</td><td>${order.priceFormatted.toFixed(4)}</td><td><Link href="/market" style={{ color:"var(--gold)" }}>Manage / cancel</Link></td></tr>)}</tbody></table></div>}
+        </div>
         {/* Default recovery note */}
         {defaultedCount > 0 && (
           <div style={{ marginTop:16, padding:16, background:"rgba(224,82,82,0.06)", borderRadius:12, border:"1px solid rgba(224,82,82,0.2)" }}>

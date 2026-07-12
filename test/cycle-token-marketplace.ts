@@ -162,4 +162,40 @@ describe("CycleTokenMarketplaceV2", function () {
     expect(fee).to.equal(ethers.parseEther("0.5"));
     expect(total).to.equal(ethers.parseEther("100"));
   });
+  it("supports partial fills, tracks the remainder, and closes after the final fill", async function () {
+    const { seller, buyer, treasury, usdc, token, marketplace } = await deployFundedCycleFixture();
+    const market = await marketplace.getAddress();
+    const tokenAddress = await token.getAddress();
+    await token.connect(seller).approve(market, ethers.parseEther("300"));
+    await marketplace.connect(seller).createSellOrder(tokenAddress, ethers.parseEther("300"), ethers.parseEther("1"));
+    await usdc.connect(buyer).approve(market, ethers.parseEther("300"));
+
+    const sellerBefore = await usdc.balanceOf(seller.address);
+    const treasuryBefore = await usdc.balanceOf(treasury.address);
+    await marketplace.connect(buyer).buyOrder(0, ethers.parseEther("100"));
+    let order = await marketplace.orders(0);
+    expect(order.amount).to.equal(ethers.parseEther("200"));
+    expect(order.active).to.equal(true);
+    expect(await token.balanceOf(buyer.address)).to.equal(ethers.parseEther("100"));
+    expect(await usdc.balanceOf(seller.address)).to.equal(sellerBefore + ethers.parseEther("99.5"));
+    expect(await usdc.balanceOf(treasury.address)).to.equal(treasuryBefore + ethers.parseEther("0.5"));
+
+    await marketplace.connect(buyer).buyOrder(0, ethers.parseEther("200"));
+    order = await marketplace.orders(0);
+    expect(order.amount).to.equal(0n);
+    expect(order.active).to.equal(false);
+    await expect(marketplace.connect(buyer).buyOrder(0, 1n)).to.be.revertedWith("Order inactive");
+  });
+
+  it("rejects zero-value listings, prices, and fills", async function () {
+    const { seller, buyer, usdc, token, marketplace } = await deployFundedCycleFixture();
+    const market = await marketplace.getAddress();
+    const tokenAddress = await token.getAddress();
+    await expect(marketplace.connect(seller).createSellOrder(tokenAddress, 0n, 1n)).to.be.revertedWith("Invalid amount");
+    await expect(marketplace.connect(seller).createSellOrder(tokenAddress, 1n, 0n)).to.be.revertedWith("Invalid price");
+    await token.connect(seller).approve(market, ethers.parseEther("10"));
+    await marketplace.connect(seller).createSellOrder(tokenAddress, ethers.parseEther("10"), ethers.parseEther("1"));
+    await usdc.connect(buyer).approve(market, ethers.parseEther("10"));
+    await expect(marketplace.connect(buyer).buyOrder(0, 0n)).to.be.revertedWith("Zero fill");
+  });
 });

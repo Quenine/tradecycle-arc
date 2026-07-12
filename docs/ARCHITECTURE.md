@@ -1,4 +1,4 @@
-﻿# TradeCycle Architecture
+# TradeCycle Architecture
 
 TradeCycle is a USDC milestone-finance workflow for SME production and trade cycles on Arc Testnet. The current implementation uses Arc and USDC directly. Circle Gateway, CCTP / Bridge Kit, Circle Wallets, and USYC are documented as architecture-ready, future, or gated paths only.
 
@@ -106,3 +106,41 @@ Architecture-ready or future:
 - **CCTP / Bridge Kit**: cross-chain USDC funding and settlement when investors start from another chain and settle on Arc.
 - **Circle Wallets**: embedded wallet onboarding for non-crypto-native SMEs, investors, and verifiers.
 - **USYC**: gated/enterprise concept for idle treasury, reserve, or inventory float. Not implemented unless access is granted.
+
+## Transferable investor positions and secondary liquidity
+
+Primary USDC funding mints ERC-20 `CycleShareToken` positions to investors. Tokens are transferable and may be listed in `CycleTokenMarketplaceV2`, whose order book escrows the seller's shares until they are filled or cancelled. Buyers can fill all or part of an active sell order. USDC moves directly from buyer to seller, less the configured trading fee sent to `ProtocolTreasury`; the purchased shares move from marketplace escrow to the buyer.
+
+Settlement and recovery rights follow current token ownership. After a successful distribution, the current holder burns shares through `ProductionCycle.withdraw`; after default, the current holder uses `withdrawAfterDefault`. An original investor who sold shares cannot redeem those sold shares. Active listings and willing counterparties determine liquidity: TradeCycle does not promise an exit, fair value, NAV, an AMM, or protocol market making.
+
+Lifecycle policy in the current frontend treats funding, active, and harvest-submitted shares as tradeable financing positions. After distribution or default, new buy/list actions are disabled in the UI, cancellation remains available, and holders are directed to Portfolio for settlement or recovery. The deployed marketplace contract itself does not inspect cycle state, so this lifecycle restriction is a frontend safety policy rather than onchain enforcement.
+
+## Protocol administration and trust assumptions
+
+TradeCycle's owner-gated Admin dashboard is the protocol operations and risk-control layer. Deployed permissions include operator-entry policy and reviews, treasury operations, reserve compensation, YieldOracle inputs, marketplace configuration, and separately gated advanced liquidity infrastructure. Investor funding and settlement remain enforced by cycle contracts, while verifier quorum controls milestone approval; the owner does not replace that quorum through the Admin UI. This testnet release does not claim decentralized governance. Multisig, timelock, and community governance are future hardening paths.
+### Marketplace and protocol-operations topology
+
+```mermaid
+flowchart LR
+  Seller[Seller] -->|approve + escrow shares| Market[CycleTokenMarketplaceV2]
+  Buyer[Buyer] -->|USDC gross cost| Market
+  Market -->|cycle shares| Buyer
+  Market -->|USDC less fee| Seller
+  Market -->|trading fee| Treasury[ProtocolTreasury]
+  Cycle[ProductionCycle] -->|mint on funding| Share[CycleShareToken]
+  Share --> Seller
+  Share -->|current-holder burn| Cycle
+  Cycle -->|settlement or recovery| Buyer
+
+  Admin[Protocol Owner / Admin Operations] -->|approve operators + configure entry| Factory[ProductionCycleFactoryV2]
+  Admin -->|monitor + withdraw authorized revenue| Treasury
+  Admin -->|monitor + compensate distressed cycles| Reserve[ReservePool]
+  Admin -->|configure transparent estimate inputs| Oracle[YieldOracle]
+  Admin -->|monitor + configure fee within cap| Market
+  Admin -->|configure optional DEX routing| Manager[LiquidityManager]
+  Admin -->|fund/monitor optional liquidity capital| Vault[LiquidityVault]
+  Vault --> Manager
+  Verifiers[Verifier quorum] -->|approve milestone evidence| Cycle
+```
+
+Admin arrows do not bypass `ProductionCycle` milestone state or verifier quorum and do not imply control of cycle escrow.

@@ -26,15 +26,16 @@ export default function HomePage() {
             USDC milestone finance <br />for <span className="text-gold">SMEs on Arc</span>.
           </h1>
           <p style={{ fontSize: 16, color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 520, marginBottom: 32 }}>
-            TradeCycle helps SMEs raise USDC working capital for real production and trade cycles. Investors fund a cycle, verifiers approve milestone releases, and repayment is automatically distributed on Arc.
+            TradeCycle helps SMEs raise USDC working capital for real production and trade cycles. Investors fund a cycle and receive transferable cycle-share tokens. They can hold or trade where counterparties exist, while verifier-approved releases and current-holder redemption settle on Arc.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <Link href="/demo" className="btn-primary" style={{ textDecoration: "none" }}>View Demo -&gt;</Link>
+            <Link href="/market" className="btn-ghost" style={{ textDecoration: "none" }}>Trade Cycle Tokens</Link>
             <a href="#cycles" className="btn-ghost">Browse Cycles</a>
             <Link href="/operator" className="btn-ghost" style={{ textDecoration: "none" }}>Create a Cycle</Link>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10, marginTop: 28, maxWidth: 620 }}>
-            {["USDC escrow", "Verifier release", "Credit Passport"].map((item) => (
+            {["USDC escrow", "Transferable positions", "Verifier release", "Credit Passport"].map((item) => (
               <div key={item} className="workflow-node" style={{ padding: 12 }}>
                 <p style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>{item}</p>
               </div>
@@ -46,11 +47,13 @@ export default function HomePage() {
           <p className="page-kicker">Core value chain</p>
           <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
             {[
-              ["Fund", "Investors put USDC into the ProductionCycle contract."],
-              ["Verify", "Staked verifiers approve milestone evidence."],
-              ["Release", "Capital moves to the operator by approved tranche."],
-              ["Repay", "Expected revenue is repaid and distributed on Arc."],
-              ["Credit Passport", "Completed cycles add onchain operator reputation."],
+              ["Create", "An approved operator defines a real production or trade cycle."],
+              ["Fund", "Investors commit USDC to the ProductionCycle contract."],
+              ["Tokenize", "Funding mints transferable ERC-20 cycle-share tokens."],
+              ["Trade or hold", "Holders may use the USDC order book where listings and counterparties exist."],
+              ["Verify and release", "Staked verifiers approve evidence before capital moves by tranche."],
+              ["Repay and redeem", "Repayment rights follow current token ownership."],
+              ["Credit Passport", "Completed cycles add reusable onchain operator history."],
             ].map(([title, body]) => (
               <div key={title} className="workflow-node">
                 <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 3 }}>{title}</p>
@@ -96,7 +99,7 @@ export default function HomePage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
           {[
             { title: "SME Operators", desc: "Raise USDC working capital, unlock funds through approved milestones, and build a repayment record cycle by cycle." },
-            { title: "Investors", desc: "Fund real production and trade cycles on Arc Testnet, track evidence, and withdraw after automated settlement." },
+            { title: "Investors", desc: "Fund cycles, hold or trade tokenized positions where counterparties exist, and redeem as the current holder after settlement." },
             { title: "Verifiers", desc: "Stake USDC, review operator evidence, approve milestones, and earn protocol rewards for accountable checks." },
           ].map((role) => (
             <div key={role.title} style={{ padding: 24, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8 }}>
@@ -135,7 +138,7 @@ export default function HomePage() {
           <div style={{ flex: 1, minWidth: 280 }}>
             <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--gold)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Protocol Revenue</p>
             <p style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "var(--text-primary)", marginBottom: 8 }}>Onchain settlement economics</p>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.7 }}>Every completed TradeCycle contributes to treasury and reserve flows while leaving a transparent repayment trail for the operator.</p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.7 }}>Cycle settlement contributes protocol and reserve fees; executed order-book trades add marketplace fee revenue. Liquidity depends on active listings and willing counterparties.</p>
           </div>
           <div style={{ display: "flex", gap: 32, flexShrink: 0 }}>
             {[

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import Navbar from "@/components/navbar"
@@ -35,7 +35,7 @@ const WIN_POINTS = [
   "Not just invoice escrow",
   "Full cycle finance workflow",
   "Verifier-approved milestone release",
-  "Tokenized investor positions",
+  "Transferable investor positions with secondary liquidity",
   "Automated repayment waterfall",
   "SME Credit Passport as reusable financing reputation",
   "Clear Arc/USDC settlement layer",
@@ -103,7 +103,7 @@ export default function SubmissionPage() {
             <div>
               <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Why this track fits</p>
               <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.8 }}>
-                TradeCycle provides USDC working capital, milestone escrow, verifier-approved releases, tokenized investor positions, automated repayment distribution, and SME Credit Passport.
+                TradeCycle provides USDC working capital, milestone escrow, verifier-approved releases, transferable cycle-share positions with an onchain USDC order book and current-holder settlement rights, and SME Credit Passport.
               </p>
             </div>
           </div>

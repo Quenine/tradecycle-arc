@@ -104,13 +104,14 @@ function CycleSelector({ selected, wallet, onSelect }: {
   )
 }
 
-function OrderRow({ order, wallet, onBuy, onCancel, buying, showToken = false }: {
+function OrderRow({ order, wallet, onBuy, onCancel, buying, showToken = false, allowBuy = false }: {
   order: MarketOrder
   wallet?: `0x${string}`
   onBuy: (order: MarketOrder, amount: string) => Promise<void>
   onCancel: (order: MarketOrder) => Promise<void>
   buying: boolean
   showToken?: boolean
+  allowBuy?: boolean
 }) {
   const [fillAmount, setFillAmount] = useState(order.amountFormatted.toString())
   const isMine = !!wallet && order.seller.toLowerCase() === wallet.toLowerCase()
@@ -155,8 +156,8 @@ function OrderRow({ order, wallet, onBuy, onCancel, buying, showToken = false }:
             </button>
           </div>
         ) : (
-          <button className="btn-primary" style={{ padding: "6px 12px", fontSize: 12 }} onClick={() => onBuy(order, fillAmount)} disabled={buying || fill === 0n}>
-            {buying ? "Working..." : "Buy"}
+          <button className="btn-primary" style={{ padding: "6px 12px", fontSize: 12 }} onClick={() => onBuy(order, fillAmount)} disabled={buying || fill === 0n || !allowBuy}>
+            {!allowBuy ? "Select active cycle" : buying ? "Working..." : "Buy"}
           </button>
         )}
       </td>
@@ -196,6 +197,10 @@ export default function MarketPage() {
   }, [sellAmount])
   const canSell = !!address && tradeEnabled && sellAmountParsed > 0n && selectedCycle !== null && sellAmountParsed <= selectedCycle.balance && Number(sellPrice) > 0
   const feePct = Number(tradingFeeBps) / 100
+  const sellGross = (Number(sellAmount) || 0) * (Number(sellPrice) || 0)
+  const sellFee = sellGross * feePct / 100
+  const sellNet = Math.max(0, sellGross - sellFee)
+  const myListings = allOrders.filter(order => address && order.seller.toLowerCase() === address.toLowerCase())
 
   async function handleCreateOrder() {
     if (!selectedCycle || !canSell) return
@@ -246,7 +251,7 @@ export default function MarketPage() {
       <Navbar />
       <div style={{ maxWidth: 500, margin: "120px auto", textAlign: "center", padding: "0 32px" }}>
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 400, marginBottom: 12 }}>Cycle token market</h2>
-        <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 28 }}>Connect your wallet to trade cycle tokens.</p>
+        <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 28 }}>Cycle tokens are transferable settlement positions minted when investors fund a cycle. The order book escrows listed tokens, supports partial fills, and transfers settlement rights to buyers. Current holders redeem after distribution or default. Liquidity depends on active listings and willing counterparties. Connect to trade or manage listings.</p>
         <ConnectWallet />
       </div>
     </div>
@@ -260,7 +265,7 @@ export default function MarketPage() {
           <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--gold)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>Secondary market</p>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 400, marginBottom: 8 }}>Trade cycle tokens</h1>
           <p style={{ fontSize: 14, color: "var(--text-muted)", maxWidth: 720, lineHeight: 1.7 }}>
-            Buy or sell ERC-20 cycle shares before settlement. When the cycle distributes, whoever holds the tokens can redeem principal plus yield from Portfolio.
+            Cycle-share tokens represent transferable settlement positions. Sellers escrow tokens in the order book; buyers may partially or fully fill listings with USDC. Current holders redeem after distribution or default. Liquidity and exit timing depend on active listings and counterparties.
           </p>
         </div>
 
@@ -314,6 +319,7 @@ export default function MarketPage() {
                     onCancel={handleCancel}
                     buying={busy === `buy-${order.id}` || busy === `cancel-${order.id}`}
                     showToken
+                    allowBuy={false}
                   />
                 ))}
               </tbody>
@@ -339,10 +345,11 @@ export default function MarketPage() {
                 </div>
               )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 18 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10, marginBottom: 18 }}>
                 {[
                   ["Your balance", `${myBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${selectedCycle.symbol}`],
                   ["Open orders", orders.length.toString()],
+                  ["My open listings", myListings.filter(order => order.token.toLowerCase() === selectedCycle.token.toLowerCase()).length.toString()],
                   ["Lowest ask", lowestListing === null ? "-" : `$${lowestListing.toFixed(4)}`],
                   ["Highest ask", highestListing === null ? "-" : `$${highestListing.toFixed(4)}`],
                 ].map(([label, value]) => (
@@ -383,6 +390,7 @@ export default function MarketPage() {
                         onBuy={handleBuy}
                         onCancel={handleCancel}
                         buying={busy === `buy-${order.id}` || busy === `cancel-${order.id}`}
+                        allowBuy={tradeEnabled}
                       />
                     ))}
                   </tbody>
@@ -400,6 +408,7 @@ export default function MarketPage() {
                 <input type="number" value={sellAmount} min="0" max={myBalance} onChange={(event) => setSellAmount(event.target.value)} placeholder="0.0" />
                 <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", margin: "12px 0 5px" }}>Price per token (USDC)</label>
                 <input type="number" value={sellPrice} min="0" onChange={(event) => setSellPrice(event.target.value)} placeholder="1.00" />
+                <div style={{ marginTop:12, padding:12, background:"var(--bg-surface)", borderRadius:8, fontSize:12 }}><p>Expected gross: ${sellGross.toFixed(2)} USDC</p><p style={{ color:"var(--text-muted)" }}>Fee estimate ({feePct}%): ${sellFee.toFixed(2)}</p><p style={{ color:"var(--emerald)" }}>Estimated seller proceeds: ${sellNet.toFixed(2)} USDC</p></div>
                 <button className="btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={handleCreateOrder} disabled={!canSell || busy === "sell"}>
                   {busy === "sell" ? "Listing..." : "List tokens"}
                 </button>

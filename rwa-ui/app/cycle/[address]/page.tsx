@@ -44,7 +44,7 @@ export default function CycleDetailPage() {
   const cycleAddress = params.address as string
   const { address: wallet } = useAccount()
   const cycle  = useCycleData(cycleAddress)
-  const { orders: marketOrders } = useMarketOrders(cycle.tokenAddress)
+  const { orders: marketOrders, lowestListing, highestListing } = useMarketOrders(cycle.tokenAddress)
   const { send, approve } = useWatchedWrite()
 
   const [investAmount, setInvestAmount] = useState("")
@@ -360,6 +360,13 @@ export default function CycleDetailPage() {
               </div>
             )}
 
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", gap:16, alignItems:"center", flexWrap:"wrap" }}>
+                <div><p style={{ fontSize:14, fontWeight:600, marginBottom:5 }}>Transferable cycle-share position</p><p style={{ fontSize:12, color:"var(--text-muted)", lineHeight:1.65, maxWidth:720 }}>Funding mints cycle tokens that carry the settlement or recovery claim. Holders may trade through the USDC order book where listings and counterparties exist; liquidity is not guaranteed. After distribution, the current holder redeems from Portfolio.</p></div>
+                <Link href="/market" className="btn-primary" style={{ textDecoration:"none" }}>Trade token</Link>
+              </div>
+              <div style={{ display:"flex", gap:18, flexWrap:"wrap", marginTop:14, fontSize:12, fontFamily:"var(--font-mono)" }}><span>{marketOrders.length} active order(s)</span><span>Lowest ask: {lowestListing === null ? "-" : `$${lowestListing.toFixed(4)}`}</span><span>Highest ask: {highestListing === null ? "-" : `$${highestListing.toFixed(4)}`}</span></div>
+            </div>
             {/* Contract links */}
             <div className="card" style={{ padding: 14, display: "flex", gap: 24, flexWrap: "wrap" }}>
               {[{ label: "Cycle contract", addr: cycleAddress }, { label: "Share token", addr: cycle.tokenAddress }].filter(l => l.addr).map(l => (

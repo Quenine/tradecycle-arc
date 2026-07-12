@@ -600,9 +600,9 @@ export default function AdminPage() {
           {showAdvancedLiquidityControls ? (
             <>
           <div className="card" style={{ padding: 24, gridColumn: "1 / -1" }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Advanced secondary-liquidity controls</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Advanced DEX liquidity infrastructure</h3>
             <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18, lineHeight: 1.7 }}>
-              These controls are disabled in the public demo because secondary liquidity is not part of the core SME finance workflow. When enabled, configure and fund the protocol liquidity manager here.
+              The onchain cycle-token order book is TradeCycle&apos;s implemented secondary-liquidity path. These separately gated controls fund optional protocol-owned DEX seeding and automated liquidity launch; they are not required for order-book trading and do not guarantee liquidity.
             </p>
 
             {!hasLiquidityManager || !hasLiquidityVault ? (
@@ -794,9 +794,9 @@ export default function AdminPage() {
             </>
           ) : (
             <div className="card" style={{ padding: 24, gridColumn: "1 / -1" }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Advanced secondary-liquidity controls</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Advanced DEX liquidity infrastructure</h3>
               <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7 }}>
-                These controls are disabled in the public demo because secondary liquidity is not part of the core SME finance workflow. Configure liquidity vault and manager addresses through environment variables before enabling advanced liquidity controls.
+                The order book is the implemented secondary-liquidity mechanism. These configuration-gated liquidity-vault and manager controls are optional DEX infrastructure and do not guarantee a functioning pair or market liquidity.
               </p>
             </div>
           )}

@@ -142,3 +142,9 @@ Needs final deployed verification:
 - docs/DEPLOYMENT_CHECKLIST.md
 - docs/VIDEO_RECORDING_CHECKLIST.md
 - docs/SECURITY_NOTES.md
+
+## Marketplace and Admin demo segment
+
+TradeCycle connects five layers: policy-gated SME onboarding, milestone-controlled USDC working capital, independent verifier quorum, transferable cycle-share positions through an onchain USDC order book, and a reusable SME Credit Passport. The Admin dashboard supports this as the protocol operations and risk-control layer; it is not a replacement for cycle escrow or verifier quorum.
+
+Demo order: problem and solution; operator application and owner-gated review; cycle creation; primary USDC funding; cycle-token receipt; seller lists part of a position; a second wallet partially fills the listing; explain that settlement rights moved with the tokens; evidence submission; verifier quorum; tranche release; operator repayment; current-holder redemption; Credit Passport update; Arc + USDC close. Keep Admin to 20-30 seconds and do not execute sensitive owner operations solely for the recording.

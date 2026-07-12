@@ -6,7 +6,7 @@ import { useReadContracts } from "wagmi"
 import Navbar from "@/components/navbar"
 import { CONTRACTS, NETWORK } from "@/constants/contracts"
 import { FACTORY_V2_ABI } from "@/contracts/abis-v2"
-import { RESERVE_POOL_ABI, VERIFIER_REGISTRY_ABI, ERC20_ABI } from "@/contracts/abis"
+import { RESERVE_POOL_ABI, VERIFIER_REGISTRY_ABI, ERC20_ABI, TOKEN_MARKETPLACE_ABI } from "@/contracts/abis"
 import { stableAmountToNumber } from "@/lib/token-units"
 
 export default function StatsPage() {
@@ -18,6 +18,9 @@ export default function StatsPage() {
       { address: CONTRACTS.stablecoin,       abi: ERC20_ABI,           functionName: "balanceOf", args: [CONTRACTS.treasury] },
       { address: CONTRACTS.stablecoin,       abi: ERC20_ABI,           functionName: "balanceOf", args: [CONTRACTS.collateralVault] },
       { address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "quorum" },
+      { address: CONTRACTS.tokenMarketplace, abi: TOKEN_MARKETPLACE_ABI, functionName: "nextOrderId" },
+      { address: CONTRACTS.tokenMarketplace, abi: TOKEN_MARKETPLACE_ABI, functionName: "tradingFeeBps" },
+      { address: CONTRACTS.tokenMarketplace, abi: TOKEN_MARKETPLACE_ABI, functionName: "totalFeesCollected" },
     ],
     query: { refetchInterval: 15000 },
   })
@@ -29,6 +32,9 @@ export default function StatsPage() {
   const treasuryBal   = stableAmountToNumber((data?.[3]?.result as bigint) ?? 0n)
   const collateralTVL = stableAmountToNumber((data?.[4]?.result as bigint) ?? 0n)
   const quorum        = Number(data?.[5]?.result ?? 2n)
+  const marketOrders  = Number(data?.[6]?.result ?? 0n)
+  const marketFeeBps  = Number(data?.[7]?.result ?? 0n)
+  const marketFees    = stableAmountToNumber((data?.[8]?.result as bigint) ?? 0n)
   const totalTVL      = reserveBal + treasuryBal + collateralTVL
 
   const MODE_LABELS = ["Manual review","Open (instant)","Collateral gate"]
@@ -41,6 +47,9 @@ export default function StatsPage() {
     { label: "Total value locked",  value: isLoading ? "—" : `$${Math.round(totalTVL).toLocaleString()}`,   sub: "across all protocol contracts", color: "var(--text-primary)" },
     { label: "Verifier quorum",     value: isLoading ? "—" : `${quorum} approvals`,                         sub: "required per milestone",        color: "var(--text-primary)" },
     { label: "Protocol fee",        value: "2%",                                                              sub: "of cycle profit",               color: "var(--text-muted)" },
+    { label: "Marketplace orders", value: isLoading ? "—" : marketOrders.toString(), sub: "orders created; not trading volume", color: "var(--gold)" },
+    { label: "Marketplace fee", value: isLoading ? "—" : `${marketFeeBps / 100}%`, sub: "deducted from seller proceeds", color: "var(--gold)" },
+    { label: "Market fees collected", value: isLoading ? "—" : `$${marketFees.toFixed(4)}`, sub: "read from order-book contract", color: "var(--emerald)" },
     { label: "Approval mode",       value: isLoading ? "—" : MODE_LABELS[approvalMode],                    sub: "operator onboarding",           color: approvalMode === 1 ? "var(--emerald)" : "var(--warning)" },
   ]
 

@@ -1,4 +1,4 @@
-﻿import pkg from "hardhat"
+import pkg from "hardhat"
 const { ethers, network } = pkg
 import * as fs from "fs"
 import * as path from "path"
@@ -23,6 +23,10 @@ const abi = [
   "function treasury() view returns (address)",
   "function liquidityVault() view returns (address)",
   "function approvalMode() view returns (uint8)",
+  "function tradingFeeBps() view returns (uint256)",
+  "function MAX_FEE_BPS() view returns (uint256)",
+  "function totalFeesCollected() view returns (uint256)",
+  "function nextOrderId() view returns (uint256)",
   "function setFactory(address)",
   "function setVault(address)",
   "function setLiquidityManager(address)",
@@ -121,7 +125,18 @@ async function checkReadable(rows: Row[], target: string, contract: any, getter:
   })
 }
 
-async function getOwner(contract: any): Promise<string | undefined> {
+
+async function checkMarketplaceFee(rows: Row[], marketplace: any) {
+  const fee = await tryRead(marketplace, "tradingFeeBps")
+  const cap = await tryRead(marketplace, "MAX_FEE_BPS")
+  if (!fee.ok || !cap.ok) {
+    rows.push({ target: "CycleTokenMarketplaceV2", check: "trading fee cap", status: "FAIL", details: "Fee or MAX_FEE_BPS is unreadable" })
+    return
+  }
+  const feeValue = BigInt(fmt(fee.value))
+  const capValue = BigInt(fmt(cap.value))
+  rows.push({ target: "CycleTokenMarketplaceV2", check: "tradingFeeBps <= MAX_FEE_BPS", status: feeValue <= capValue ? "PASS" : "FAIL", details: `${feeValue} bps; cap ${capValue} bps` })
+}async function getOwner(contract: any): Promise<string | undefined> {
   const owner = await tryRead(contract, "owner")
   if (!owner.ok) return undefined
   const value = fmt(owner.value)
@@ -222,11 +237,11 @@ async function main() {
   await checkAddressGetter(rows, "LiquidityManager", lm, "stablecoin", addresses.stablecoin)
   await checkAddressGetter(rows, "LiquidityManager", lm, "factory", addresses.ProductionCycleFactoryV2)
   await checkAddressGetter(rows, "LiquidityManager", lm, "vault", addresses.LiquidityVault)
-  await checkReadable(rows, "LiquidityManager", lm, "owner")
+  await checkAddressGetter(rows, "LiquidityManager", lm, "owner", asAddress(deployment.deployer, "deployer"))
 
   await checkAddressGetter(rows, "LiquidityVault", lv, "stablecoin", addresses.stablecoin)
   await checkAddressGetter(rows, "LiquidityVault", lv, "liquidityManager", addresses.LiquidityManager)
-  await checkReadable(rows, "LiquidityVault", lv, "owner")
+  await checkAddressGetter(rows, "LiquidityVault", lv, "owner", asAddress(deployment.deployer, "deployer"))
 
   await checkAddressGetter(rows, "ProductionCycleFactoryV2", factory, "stablecoin", addresses.stablecoin)
   await checkAddressGetter(rows, "ProductionCycleFactoryV2", factory, "verifierRegistry", addresses.VerifierRegistry)
@@ -236,19 +251,23 @@ async function main() {
   await checkAddressGetter(rows, "ProductionCycleFactoryV2", factory, "liquidityVault", addresses.LiquidityVault)
   await checkAddressGetter(rows, "ProductionCycleFactoryV2", factory, "liquidityManager", addresses.LiquidityManager)
   await checkReadable(rows, "ProductionCycleFactoryV2", factory, "approvalMode")
-  await checkReadable(rows, "ProductionCycleFactoryV2", factory, "owner")
+  await checkAddressGetter(rows, "ProductionCycleFactoryV2", factory, "owner", asAddress(deployment.deployer, "deployer"))
 
   await checkAddressGetter(rows, "ProtocolTreasury", treasury, "stablecoin", addresses.stablecoin)
-  await checkReadable(rows, "ProtocolTreasury", treasury, "owner")
+  await checkAddressGetter(rows, "ProtocolTreasury", treasury, "owner", asAddress(deployment.deployer, "deployer"))
 
   await checkAddressGetter(rows, "ReservePool", reservePool, "stablecoin", addresses.stablecoin)
-  await checkReadable(rows, "ReservePool", reservePool, "owner")
+  await checkAddressGetter(rows, "ReservePool", reservePool, "owner", asAddress(deployment.deployer, "deployer"))
 
   await checkAddressGetter(rows, "CycleTokenMarketplaceV2", marketplace, "stablecoin", addresses.stablecoin)
   await checkAddressGetter(rows, "CycleTokenMarketplaceV2", marketplace, "treasury", addresses.ProtocolTreasury)
-  await checkReadable(rows, "CycleTokenMarketplaceV2", marketplace, "owner")
+  await checkAddressGetter(rows, "CycleTokenMarketplaceV2", marketplace, "owner", asAddress(deployment.deployer, "deployer"))
+  await checkReadable(rows, "CycleTokenMarketplaceV2", marketplace, "tradingFeeBps")
+  await checkReadable(rows, "CycleTokenMarketplaceV2", marketplace, "totalFeesCollected")
+  await checkReadable(rows, "CycleTokenMarketplaceV2", marketplace, "nextOrderId")
+  await checkMarketplaceFee(rows, marketplace)
 
-  await checkReadable(rows, "YieldOracle", yieldOracle, "owner")
+  await checkAddressGetter(rows, "YieldOracle", yieldOracle, "owner", asAddress(deployment.deployer, "deployer"))
 
   printRows("Bytecode checks", bytecodeRows)
   printRows("Wiring checks", rows)

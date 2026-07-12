@@ -192,3 +192,26 @@ test("cycle route validates invalid and no-bytecode addresses in-page", async ({
   await expect(page.getByRole("heading", { name: "Cycle unavailable" })).toBeVisible()
   await expect(page.locator("body")).not.toContainText(/This page couldn.t load/i)
 })
+test("marketplace is positioned as a core transferable-position lifecycle", async ({ page }) => {
+  await page.goto("/")
+  await expect(page.getByRole("link", { name: "Trade Cycle Tokens" })).toHaveAttribute("href", "/market")
+  await expect(page.locator("body")).toContainText("Transferable positions")
+  await expect(page.locator("body")).toContainText("Repay and redeem")
+
+  await page.goto("/market")
+  const marketText = page.locator("body")
+  await expect(marketText).toContainText(/transferable settlement positions/i)
+  await expect(marketText).toContainText(/partial fills/i)
+  await expect(marketText).toContainText(/liquidity depends/i)
+  await expect(marketText).toContainText(/current holders redeem/i)
+
+  await page.goto("/cycle/0x9022eF1aF5b45163CD1853fA380Bc41F94EB59cF")
+  await expect(page.getByRole("link", { name: "Trade token" })).toHaveAttribute("href", "/market")
+  await expect(page.locator("body")).toContainText(/liquidity is not guaranteed/i)
+
+  await page.goto("/demo")
+  await expect(page.locator("body")).toContainText("Receive and list cycle-share tokens")
+  await expect(page.locator("body")).toContainText("Partially fill a sell order")
+  await page.goto("/submission")
+  await expect(page.locator("body")).toContainText(/onchain USDC order book/i)
+})
