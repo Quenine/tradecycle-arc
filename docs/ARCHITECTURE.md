@@ -1,146 +1,238 @@
 # TradeCycle Architecture
 
-TradeCycle is a USDC milestone-finance workflow for SME production and trade cycles on Arc Testnet. The current implementation uses Arc and USDC directly. Circle Gateway, CCTP / Bridge Kit, Circle Wallets, and USYC are documented as architecture-ready, future, or gated paths only.
+TradeCycle is a USDC milestone-finance protocol for SME production and trade cycles on Arc Testnet. It combines policy-gated operator onboarding, cycle-specific USDC escrow, verifier-controlled milestone releases, transferable investor positions, secondary-market trading, current-holder settlement, reserve-backed recovery paths, and an onchain SME Credit Passport.
 
-## System diagram
+The current release implements Arc and USDC directly. Circle Gateway, CCTP / Bridge Kit, Circle Wallets, and USYC are documented as future expansion paths and are not claimed as implemented.
 
-```mermaid
-flowchart LR
-  Investor[Investor]
-  Operator[SME Operator]
-  Verifier[Verifier]
-  Frontend[TradeCycle frontend]
-  Arc[Arc Testnet]
-  USDC[USDC]
-  Factory[ProductionCycleFactoryV2]
-  Cycle[ProductionCycle]
-  Share[CycleShareToken]
-  Vault[CollateralVault]
-  Registry[VerifierRegistry]
-  Reserve[ReservePool]
-  Treasury[ProtocolTreasury]
-  Passport[Credit Passport UI]
+## Architecture overview
 
-  Investor --> Frontend
-  Operator --> Frontend
-  Verifier --> Frontend
-  Frontend --> Arc
-  Arc --> USDC
-  Arc --> Factory
-  Factory --> Cycle
-  Cycle --> Share
-  Cycle --> Vault
-  Cycle --> Registry
-  Cycle --> Reserve
-  Cycle --> Treasury
-  Registry --> Verifier
-  Cycle --> Passport
-  Factory --> Passport
-  Registry --> Passport
-  Vault --> Passport
-  Reserve --> Passport
+![TradeCycle simplified architecture](assets/tradecycle-simplified-architecture.png)
+
+### What the diagram shows
+
+- **SME operators** apply, create cycles, submit milestone evidence, receive approved capital tranches, and repay.
+- **Investors** fund cycles with USDC and receive cycle-share tokens.
+- **Secondary buyers and sellers** trade cycle-share positions through an onchain USDC order book where counterparties exist.
+- **Verifiers** stake USDC, review evidence, and approve milestones until quorum is reached.
+- **Protocol administration** controls operator-entry policy, treasury operations, reserve compensation, transparent risk inputs, and separately gated advanced liquidity infrastructure.
+- **Arc Testnet** provides smart-contract execution and settlement.
+- **USDC** is the unit of account for funding, escrow, staking, releases, trading, fees, repayment, recovery, and redemption.
+- **Credit Passport** derives operator history from readable onchain cycle activity.
+
+## End-to-end protocol lifecycle
+
+1. **Apply and approve**  
+   An SME operator submits business information. Depending on the configured policy, entry can be manual, open, or collateral-gated. In manual mode, the protocol owner approves or rejects the application.
+
+2. **Create a cycle**  
+   An approved operator deploys a dedicated `ProductionCycle` through `ProductionCycleFactoryV2`. The cycle records its capital requirement, expected revenue, duration, collateral, reserve percentage, protocol fee, category, location, and description.
+
+3. **Fund with USDC**  
+   Investors approve and transfer USDC into the cycle contract. Capital remains under the cycle’s programmed rules rather than being transferred to the operator immediately.
+
+4. **Receive cycle-share tokens**  
+   Primary funding mints ERC-20 `CycleShareToken` positions to investors. The token amount represents the funded position in that specific cycle.
+
+5. **Hold or trade the position**  
+   A holder can retain the position until settlement or list part or all of it through `CycleTokenMarketplaceV2`. Marketplace listings escrow cycle tokens, support partial or full fills, and settle purchases in USDC.
+
+6. **Verify and release milestones**  
+   The operator submits milestone evidence. Staked verifiers review the evidence and approve the milestone. The operator can release the corresponding tranche only after the required quorum is reached.
+
+7. **Repay and distribute**  
+   After all required milestones and final evidence are complete, the operator repays the expected revenue in USDC. The cycle allocates verifier rewards, reserve contribution, protocol fees, and investor settlement according to its rules.
+
+8. **Redeem by current ownership**  
+   Settlement rights follow current cycle-token ownership. The wallet holding tokens after distribution burns them to redeem the corresponding payout. A seller cannot redeem shares that were transferred to another buyer.
+
+9. **Update the Credit Passport**  
+   The operator’s readable history—cycles created, funding, milestone progress, completed cycles, defaults, collateral, repayment, and verifier signals—contributes to the onchain Credit Passport UI.
+
+## Contract responsibilities
+
+| Component | Responsibility |
+|---|---|
+| `ProductionCycleFactoryV2` | Operator applications, approval policy, operator authorization, and cycle deployment |
+| `ProductionCycle` | USDC funding escrow, milestone evidence, verifier-gated releases, repayment, distribution, withdrawal, default, and recovery |
+| `CycleShareToken` | Transferable ERC-20 representation of an investor’s cycle position |
+| `CycleTokenMarketplaceV2` | Escrowed sell orders, partial/full fills, cancellation, USDC settlement, and marketplace fees |
+| `VerifierRegistry` | Verifier registration, minimum stake, milestone approvals, quorum, slashing-related controls, and verifier rewards |
+| `CollateralVault` | Operator collateral custody, release, and recovery support |
+| `ReservePool` | Protocol reserve accounting and compensation for distressed cycles |
+| `ProtocolTreasury` | Destination for protocol and marketplace fee revenue |
+| `YieldOracle` | Optional owner-controlled revenue, cost, and risk estimate inputs used by the UI |
+| `LiquidityManager` | Separately gated advanced liquidity-routing and launch infrastructure |
+| `LiquidityVault` | Separately gated capital inventory for optional protocol-owned liquidity |
+| Credit Passport UI | Read-only aggregation of available operator and cycle signals into a demonstrative profile |
+
+## Primary funding and tokenization
+
+A primary investment follows this path:
+
+```text
+Investor USDC
+    -> ProductionCycle escrow
+    -> CycleShareToken minted to investor
 ```
 
-## Main components
+The investor’s token balance is not merely a frontend record. It is the onchain position used for later transfer and redemption.
 
-- **TradeCycle frontend**: Next.js app for investors, SME operators, verifiers, admin views, the guided demo, Circle funding map, submission fit page, and Credit Passport.
-- **ProductionCycleFactoryV2**: records operator application/approval state and creates cycle contracts.
-- **ProductionCycle**: holds USDC funding, records cycle terms, tracks milestone evidence, releases tranches, accepts repayment, distributes proceeds, and exposes default actions.
-- **CycleShareToken**: tokenized investor position for a specific cycle.
-- **CollateralVault**: stores operator collateral and supports release/recovery paths.
-- **VerifierRegistry**: manages verifier staking, quorum, milestone approvals, and verifier rewards.
-- **ReservePool**: protocol reserve support for loss/recovery flows.
-- **ProtocolTreasury**: receives protocol fee flows.
-- **Credit Passport UI**: reads available onchain cycle and registry signals for an operator profile.
+## Secondary marketplace and settlement rights
 
-## USDC funding path
+A marketplace trade follows this path:
 
-1. Investor connects a wallet on Arc Testnet.
-2. Investor holds or obtains USDC.
-3. Investor approves USDC for the selected `ProductionCycle`.
-4. Investor calls the cycle funding action.
-5. USDC remains in the cycle contract until milestone or settlement conditions are met.
-6. Investor receives cycle-share tokens representing the funded position.
+```text
+Seller approves cycle tokens
+    -> Marketplace escrows listed tokens
+Buyer pays USDC
+    -> Seller receives USDC minus trading fee
+    -> ProtocolTreasury receives the fee
+    -> Buyer receives cycle tokens
+```
 
-## Milestone escrow and release
+The deployed marketplace supports:
 
-Each production cycle has staged milestones. Operator capital is not released all at once. The operator submits evidence, verifiers approve it, and the operator can release the corresponding tranche after quorum is reached.
+- escrowed sell orders;
+- partial fills;
+- full fills;
+- cancellation and return of unfilled tokens;
+- a configurable trading fee;
+- fee routing to `ProtocolTreasury`.
 
-## Evidence and verifier quorum
+Liquidity depends on active listings and willing counterparties. TradeCycle does not guarantee an exit, fair value, net asset value, an AMM, or protocol market making.
 
-The cycle contract exposes evidence submission fields such as evidence CID/hash and evidence timestamps where available. `VerifierRegistry` tracks approval counts and quorum state for milestones. The UI reads this data for cycle details, verifier review, operator dashboard flows, and Credit Passport summaries.
+### Lifecycle policy
+
+The current frontend allows normal marketplace activity while a cycle is in Funding, Active, or Harvest Submitted state. After Distribution or Default:
+
+- new buy and list actions are disabled in the UI;
+- cancellation remains available;
+- holders are directed to Portfolio for settlement or recovery.
+
+This lifecycle restriction is a frontend safety policy. The deployed marketplace contract itself does not inspect the underlying cycle state.
+
+## Milestone evidence and verifier quorum
+
+Capital release is controlled by the cycle contract and verifier quorum:
+
+```text
+Operator submits evidence CID/hash
+    -> Verifiers review evidence
+    -> Required approvals are recorded
+    -> Operator releases the programmed tranche
+```
+
+Evidence references are stored as CIDs and hashes where available. Critical state transitions and approvals remain verifiable onchain.
+
+The protocol administrator does not replace verifier quorum and cannot use the Admin UI to bypass milestone state requirements.
 
 ## Repayment waterfall
 
-After the real-world production or trade cycle completes, the operator repays the expected revenue amount into the cycle contract. The protocol then distributes value according to the cycle rules, including investor payout, verifier rewards, reserve allocation, and protocol treasury fees. Investors withdraw from the Portfolio page after distribution.
+After final verification, the operator repays the exact expected revenue into the cycle. The contract then:
 
-## Default and collateral recovery path
+1. preserves investor principal;
+2. calculates cycle profit;
+3. allocates the configured reserve share;
+4. allocates the protocol fee;
+5. allocates verifier rewards;
+6. calculates profit per outstanding cycle token;
+7. enables current holders to redeem.
 
-If a cycle exceeds its duration or cannot complete, the contracts expose a default path. Collateral and reserve mechanisms are available to support recovery. The UI shows default controls where the current cycle state allows them.
+## Default and recovery
 
-## Credit Passport signal derivation
+If a cycle expires without successful completion, the contracts expose a default path. Available cycle balance, collateral recovery, and reserve compensation may contribute to token-holder recovery.
 
-The Credit Passport does not invent offchain credit data. It derives a demo score and profile from readable onchain signals:
-
-- cycles created by the operator
-- cycle state
-- capital required and raised
-- completed/distributed cycles
-- defaulted cycles
-- submitted and approved milestone counts where readable
-- collateral fields where readable
-- verifier quorum and reserve support where readable
-
-If a value cannot be read from the current deployment, the UI uses a fallback such as `Not available from current deployment.` The score is a demo score, not a regulated credit rating.
-
-## Circle expansion paths
-
-Implemented today:
-
-- Arc as smart-contract settlement layer
-- USDC for funding, escrow, milestone release, repayment, fees, and withdrawals
-
-Architecture-ready or future:
-
-- **Circle Gateway**: unified USDC liquidity for investors, treasury routing, reserve pool funding, operator payouts, and multi-party settlement movement.
-- **CCTP / Bridge Kit**: cross-chain USDC funding and settlement when investors start from another chain and settle on Arc.
-- **Circle Wallets**: embedded wallet onboarding for non-crypto-native SMEs, investors, and verifiers.
-- **USYC**: gated/enterprise concept for idle treasury, reserve, or inventory float. Not implemented unless access is granted.
-
-## Transferable investor positions and secondary liquidity
-
-Primary USDC funding mints ERC-20 `CycleShareToken` positions to investors. Tokens are transferable and may be listed in `CycleTokenMarketplaceV2`, whose order book escrows the seller's shares until they are filled or cancelled. Buyers can fill all or part of an active sell order. USDC moves directly from buyer to seller, less the configured trading fee sent to `ProtocolTreasury`; the purchased shares move from marketplace escrow to the buyer.
-
-Settlement and recovery rights follow current token ownership. After a successful distribution, the current holder burns shares through `ProductionCycle.withdraw`; after default, the current holder uses `withdrawAfterDefault`. An original investor who sold shares cannot redeem those sold shares. Active listings and willing counterparties determine liquidity: TradeCycle does not promise an exit, fair value, NAV, an AMM, or protocol market making.
-
-Lifecycle policy in the current frontend treats funding, active, and harvest-submitted shares as tradeable financing positions. After distribution or default, new buy/list actions are disabled in the UI, cancellation remains available, and holders are directed to Portfolio for settlement or recovery. The deployed marketplace contract itself does not inspect cycle state, so this lifecycle restriction is a frontend safety policy rather than onchain enforcement.
+Reserve compensation is an exceptional risk-management action. It is not guaranteed yield and does not eliminate business or liquidity risk.
 
 ## Protocol administration and trust assumptions
 
-TradeCycle's owner-gated Admin dashboard is the protocol operations and risk-control layer. Deployed permissions include operator-entry policy and reviews, treasury operations, reserve compensation, YieldOracle inputs, marketplace configuration, and separately gated advanced liquidity infrastructure. Investor funding and settlement remain enforced by cycle contracts, while verifier quorum controls milestone approval; the owner does not replace that quorum through the Admin UI. This testnet release does not claim decentralized governance. Multisig, timelock, and community governance are future hardening paths.
-### Marketplace and protocol-operations topology
+TradeCycle’s owner-gated Admin dashboard is the protocol operations and risk-control layer.
 
-```mermaid
-flowchart LR
-  Seller[Seller] -->|approve + escrow shares| Market[CycleTokenMarketplaceV2]
-  Buyer[Buyer] -->|USDC gross cost| Market
-  Market -->|cycle shares| Buyer
-  Market -->|USDC less fee| Seller
-  Market -->|trading fee| Treasury[ProtocolTreasury]
-  Cycle[ProductionCycle] -->|mint on funding| Share[CycleShareToken]
-  Share --> Seller
-  Share -->|current-holder burn| Cycle
-  Cycle -->|settlement or recovery| Buyer
+Current administrative responsibilities include:
 
-  Admin[Protocol Owner / Admin Operations] -->|approve operators + configure entry| Factory[ProductionCycleFactoryV2]
-  Admin -->|monitor + withdraw authorized revenue| Treasury
-  Admin -->|monitor + compensate distressed cycles| Reserve[ReservePool]
-  Admin -->|configure transparent estimate inputs| Oracle[YieldOracle]
-  Admin -->|monitor + configure fee within cap| Market
-  Admin -->|configure optional DEX routing| Manager[LiquidityManager]
-  Admin -->|fund/monitor optional liquidity capital| Vault[LiquidityVault]
-  Vault --> Manager
-  Verifiers[Verifier quorum] -->|approve milestone evidence| Cycle
-```
+- reviewing operator applications;
+- selecting operator-entry policy;
+- monitoring deployed cycles;
+- monitoring treasury, reserve, and marketplace metrics;
+- withdrawing authorized treasury revenue;
+- compensating eligible distressed cycles from the reserve;
+- synchronizing reserve accounting;
+- supplying optional YieldOracle estimates;
+- monitoring marketplace configuration;
+- configuring separately gated advanced liquidity infrastructure where supported.
 
-Admin arrows do not bypass `ProductionCycle` milestone state or verifier quorum and do not imply control of cycle escrow.
+Important boundaries:
+
+- investor funding remains governed by `ProductionCycle`;
+- milestone release still requires the correct cycle state, submitted evidence, and verifier quorum;
+- Admin does not provide regulated underwriting or guarantee repayment;
+- reserve capital, treasury revenue, liquidity capital, and cycle escrow are distinct balances;
+- this testnet release does not claim decentralized governance;
+- multisig, timelock, and community governance are future hardening paths.
+
+## Core marketplace versus advanced liquidity infrastructure
+
+TradeCycle has two distinct liquidity concepts:
+
+### Implemented core path
+
+`CycleTokenMarketplaceV2` is the implemented order-book marketplace. Investors create and fill cycle-token sell orders directly in USDC.
+
+### Optional, separately gated path
+
+`LiquidityManager` and `LiquidityVault` support optional protocol-owned liquidity, DEX routing, seed configuration, and launch operations. These controls are not required for order-book trading and do not guarantee that a liquid DEX market exists.
+
+## External infrastructure
+
+| Infrastructure | Use |
+|---|---|
+| Arc Testnet | Smart-contract execution and settlement |
+| USDC | Funding, escrow, staking, releases, trading, fees, repayment, reserve flows, and redemption |
+| ArcScan | Public verification of contracts and transactions |
+| Wallet providers | User transaction signing through compatible browser wallets |
+| Evidence storage | External CID/content storage with onchain hashes or references |
+
+## Circle product status
+
+### Implemented
+
+- Arc
+- USDC
+
+### Architecture-ready or future
+
+- Circle Gateway
+- CCTP / Bridge Kit
+- Circle Wallets
+- USYC
+
+### Not claimed as implemented
+
+- StableFX
+- Nanopayments
+
+## Current Arc Testnet deployment
+
+| Contract | Address |
+|---|---|
+| USDC | `0x3600000000000000000000000000000000000000` |
+| `ProductionCycleFactoryV2` | `0xB60522F3A62a1a092019E615722788F1C4af6319` |
+| `VerifierRegistry` | `0x22Fbd143994612b24B4FEC5f2282736d12CC74AF` |
+| `CollateralVault` | `0xcF13420d6677aAF055E4D7B346F9c16747e41DA5` |
+| `ReservePool` | `0xb0f77421a574ec2509632EAa6a87804a2Ed44476` |
+| `ProtocolTreasury` | `0xAE901377C440be567BcbDB6C0C8e910a18Fd6803` |
+| `YieldOracle` | `0xB47ad3B29b420fD32C77e39AFeAC55b045B5e441` |
+| `CycleTokenMarketplaceV2` | `0x7063938d47A0bB7f9f1CC305c82450715266b1D5` |
+| `LiquidityManager` | `0x2BDF6D2D3bcc1DA32D02c3771030AE176C3bAFF6` |
+| `LiquidityVault` | `0xFC2CE1a6206d3e8Fd4F2C8bC3649f303AC2459B9` |
+
+## Security boundaries and known limitations
+
+- TradeCycle is a testnet demonstration.
+- Liquidity depends on counterparties and is not guaranteed.
+- Marketplace lifecycle restrictions are currently enforced by the frontend, not by the deployed marketplace contract.
+- The Credit Passport score is demonstrative and is not a regulated credit rating.
+- Admin permissions introduce explicit trust assumptions.
+- Current protocol-owner and verifier wallets used during development must not be used with real funds.
+- The protocol has not been represented as audited or production-ready for mainnet capital.
+- Future production deployment should include independent security review, multisig ownership, timelocks, monitored indexing, and stronger governance controls.
