@@ -66,9 +66,16 @@ Status: Ready
 
 ## Video URL
 
-Placeholder: add final 2-3 minute video URL.
+Placeholder: add final 4-5 minute video URL, unless the official submission form specifies a stricter maximum.
 
 Status: Needs video
+
+
+## Video pacing guidance
+
+- First 60-90 seconds: problem, solution, Arc + USDC, and the Credit Passport differentiator.
+- Remaining time: working operator, investor, verifier, repayment, and Credit Passport flow.
+- Optional longer technical walkthrough may be linked separately.
 
 ## GitHub URL
 
@@ -99,7 +106,7 @@ Status: Ready
 - [ ] Circle Developer Account email
 - [ ] Public GitHub URL
 - [ ] Deployed demo URL
-- [ ] 2-3 minute demo video
+- [ ] 4-5 minute demo video, unless the official submission form specifies a stricter maximum
 - [ ] Architecture diagram exported as final visual if required by form
 - [ ] README setup instructions reviewed after final deployment
 - [ ] Final deployed verification on Arc Testnet
@@ -121,7 +128,7 @@ Needs URL:
 
 Needs video:
 
-- 2-3 minute video walkthrough
+- 4-5 minute video walkthrough, unless the official submission form specifies a stricter maximum
 
 Needs final deployed verification:
 

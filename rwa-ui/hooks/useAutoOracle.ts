@@ -13,6 +13,16 @@ interface AutoOracleResult {
   isLoading: boolean
 }
 
+
+type OnChainOracleEstimate = readonly [bigint, bigint, bigint, bigint, bigint, boolean] & {
+  expectedRevenue: bigint
+  estimatedCost: bigint
+  estimatedProfit: bigint
+  estimatedROI: bigint
+  riskScore: bigint
+  exists: boolean
+}
+
 export function useAutoOracle(params: {
   cycleAddress:        string
   capitalRequired:     bigint
@@ -36,7 +46,7 @@ export function useAutoOracle(params: {
     query: { enabled: !skip && !!cycleAddress, refetchInterval: 15000 },
   })
 
-  const onChain = data?.[0]?.result as any
+  const onChain = data?.[0]?.result as OnChainOracleEstimate | undefined
 
   // On-chain oracle data takes full priority
   if (onChain?.exists) {

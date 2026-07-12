@@ -1,6 +1,12 @@
 ﻿# Video Recording Checklist
 
-Recommended length: 2-3 minutes.
+Target length: 4-5 minutes, unless the official submission form specifies a stricter maximum.
+
+Suggested pacing:
+
+- First 60-90 seconds: problem, solution, Arc + USDC, and the Credit Passport differentiator.
+- Remaining time: working operator, investor, verifier, repayment, and Credit Passport flow.
+- Optional longer technical walkthrough may be linked separately.
 
 ## Recording Setup
 

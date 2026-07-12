@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
+import { Menu, X } from "lucide-react"
 import { useAccount } from "wagmi"
 import ConnectWallet from "@/components/connect-wallet"
 import { NETWORK, PROTOCOL_OWNER } from "@/constants/contracts"
@@ -24,6 +26,20 @@ export default function Navbar() {
   const { address } = useAccount()
   const isOwner = address?.toLowerCase() === PROTOCOL_OWNER.toLowerCase()
   const visibleLinks = NAV_LINKS.filter((link) => link.href !== "/admin" || isOwner)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false)
+        menuButtonRef.current?.focus()
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [menuOpen])
 
   return (
     <nav
@@ -86,14 +102,12 @@ export default function Navbar() {
         </Link>
 
         {/* Nav links — flex-shrink so they compress before hiding the wallet button */}
-        <div
+        <div className="desktop-nav"
           style={{
             display: "flex",
             gap: 1,
             flex: 1,
-            minWidth: 0,          // allows flex child to shrink below content size
-            overflow: "hidden",   // hides overflow instead of clipping wallet button
-            flexShrink: 1,
+            minWidth: 0,          // allows flex child to shrink below content size            flexShrink: 1,
           }}
         >
           {visibleLinks.map((link) => {
@@ -131,6 +145,17 @@ export default function Navbar() {
           })}
         </div>
 
+        <button
+          ref={menuButtonRef}
+          type="button"
+          className="mobile-menu-button"
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMenuOpen(open => !open)}
+        >
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
         {/* Chain indicator */}
         <div
           style={{
@@ -161,6 +186,15 @@ export default function Navbar() {
           <ConnectWallet compact />
         </div>
       </div>
+      {menuOpen && (
+        <div id="mobile-navigation" className="mobile-nav-panel">
+          {visibleLinks.map(link => (
+            <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className={pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href)) ? "active" : ""}>
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   )
 }

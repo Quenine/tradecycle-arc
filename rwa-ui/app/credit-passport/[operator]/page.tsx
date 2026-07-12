@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { CircleCheck, Minus } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useMemo } from "react"
 import { useAccount, useReadContracts } from "wagmi"
@@ -253,7 +254,7 @@ export default function CreditPassportPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 24px" }}>
                 {controls.map((control) => (
                   <div key={control.label} style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
-                    <span style={{ color: control.status.startsWith("Not") ? "var(--text-dim)" : "var(--emerald)", fontSize: 16, lineHeight: 1.4 }}>{control.status.startsWith("Not") ? "-" : "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“"}</span>
+                    <span style={{ color: control.status.startsWith("Not") ? "var(--text-dim)" : "var(--emerald)", lineHeight: 1.4, display: "inline-flex", paddingTop: 1 }}>{control.status.startsWith("Not") ? <Minus aria-hidden="true" size={16} /> : <CircleCheck aria-hidden="true" size={16} />}</span>
                     <div>
                       <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{control.label}</p>
                       <p style={{ fontSize: 12, color: "var(--gold)", marginBottom: 3 }}>{control.status}</p>

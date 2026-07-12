@@ -73,7 +73,8 @@ export function useWatchedWrite() {
       }
     }
 
-    const hash = await writeContractAsync({ ...params, gas, chainId: NETWORK.chainId } as any)
+    const request = { ...params, gas, chainId: NETWORK.chainId } as Parameters<typeof writeContractAsync>[0]
+    const hash = await writeContractAsync(request)
 
     if (publicClient) {
       const receipt = await publicClient.waitForTransactionReceipt({ hash })

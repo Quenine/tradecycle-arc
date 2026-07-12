@@ -6,6 +6,7 @@ import Link from "next/link"
 import Navbar from "@/components/navbar"
 import { usePortfolio } from "@/hooks/usePortfolio"
 import { useWatchedWrite } from "@/hooks/useWatchedWrite"
+import { getErrorMessage } from "@/lib/error-message"
 import { PRODUCTION_CYCLE_ABI } from "@/contracts/abis"
 import { NETWORK } from "@/constants/contracts"
 import ConnectWallet from "@/components/connect-wallet"
@@ -41,7 +42,7 @@ export default function PortfolioPage() {
           : "Withdrawal complete — principal + yield in your wallet!",
         "success", hash
       )
-    } catch (e: any) { showToast(e?.shortMessage ?? e?.message ?? "Withdrawal failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Withdrawal failed"), "error") }
     setBusyAddr("")
   }
 

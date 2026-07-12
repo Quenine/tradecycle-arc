@@ -13,6 +13,7 @@ import ConnectWallet from "@/components/connect-wallet"
 import { useWatchedWrite } from "@/hooks/useWatchedWrite"
 import { parseStableAmount, stableAmountToNumber } from "@/lib/token-units"
 import { getEvidenceFiles, resolveEvidenceUrl } from "@/lib/evidence"
+import { getErrorMessage } from "@/lib/error-message"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 const ZERO   = "0x0000000000000000000000000000000000000000" as `0x${string}`
@@ -130,7 +131,7 @@ function useEvidenceCIDs(cycleAddress: string): EvidenceCID[] {
 
     publicClient.getBlockNumber().then((latestBlock) => publicClient.getLogs({
       address: cycleAddress as `0x${string}`,
-      event:   EV_ABI[0] as any,
+      event:   EV_ABI[0],
       fromBlock: latestBlock > 9_999n ? latestBlock - 9_999n : 0n,
       toBlock: latestBlock,
     })).then(async logs => {
@@ -423,7 +424,7 @@ export default function VerifierPage() {
       showToast(`Registered! $${stakeAmt} staked — you can now approve milestones.`, "success", hash)
       setStakeAmt("")
       setTimeout(refetch, 1500)
-    } catch (e: any) { showToast(e?.shortMessage ?? e?.message ?? "Registration failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Registration failed"), "error") }
     setIsStaking(false)
   }
 
@@ -433,7 +434,7 @@ export default function VerifierPage() {
       const hash = await send({ address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "unstake", args: [] })
       showToast(`Unstaked — $${(myStake + pendingRew).toFixed(2)} returned to wallet.`, "success", hash)
       setTimeout(refetch, 1500)
-    } catch (e: any) { showToast(e?.shortMessage ?? e?.message ?? "Unstake failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Unstake failed"), "error") }
     setIsUnstaking(false)
   }
 
@@ -444,7 +445,7 @@ export default function VerifierPage() {
       const hash = await send({ address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "claimRewards", args: [] })
       showToast(`$${pendingRew.toFixed(4)} USDC rewards claimed!`, "success", hash)
       setTimeout(refetch, 1500)
-    } catch (e: any) { showToast(e?.shortMessage ?? e?.message ?? "Claim failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Claim failed"), "error") }
     setIsClaiming(false)
   }
 
@@ -537,7 +538,7 @@ export default function VerifierPage() {
                   ].map(s => (
                     <div key={s.label} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid var(--border)" }}>
                       <span style={{ fontSize:12, color:"var(--text-muted)" }}>{s.label}</span>
-                      <span style={{ fontFamily:"var(--font-mono)", fontSize:13, color:(s as any).color ?? "var(--text-primary)" }}>{s.value}</span>
+                      <span style={{ fontFamily:"var(--font-mono)", fontSize:13, color:"color" in s ? s.color : "var(--text-primary)" }}>{s.value}</span>
                     </div>
                   ))}
                   {pendingRew > 0.0001 && (

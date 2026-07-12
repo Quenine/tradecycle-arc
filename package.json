@@ -10,7 +10,8 @@
     "verify:ui:lint": "cd rwa-ui && npm run lint",
     "verify:ui:build": "cd rwa-ui && npm run build",
     "verify:arc": "hardhat run scripts/verifyArcDeployment.ts --network arcTestnet",
-    "repair:arc": "hardhat run scripts/verifyArcDeployment.ts --network arcTestnet"
+    "repair:arc": "hardhat run scripts/verifyArcDeployment.ts --network arcTestnet",
+    "check:text": "node scripts/check-text-integrity.mjs"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.6.1",

@@ -9,6 +9,7 @@ import { FACTORY_V2_ABI } from "@/contracts/abis-v2"
 import { PRODUCTION_CYCLE_ABI, VERIFIER_REGISTRY_ABI, COLLATERAL_VAULT_ABI } from "@/contracts/abis"
 import ConnectWallet from "@/components/connect-wallet"
 import { useWatchedWrite } from "@/hooks/useWatchedWrite"
+import { getErrorMessage } from "@/lib/error-message"
 import { stableAmountToNumber } from "@/lib/token-units"
 import { buildEvidenceManifest, getEvidenceFiles, isEvidenceLink, resolveEvidenceUrl, type EvidenceFile } from "@/lib/evidence"
 
@@ -267,8 +268,8 @@ function CyclePanel({ cycleAddr, wallet, globalToast }: {
       refetch()
       setTimeout(refetch, 1500)
       return hash
-    } catch (e: any) {
-      globalToast(e?.shortMessage ?? e?.message ?? "Transaction failed", "error")
+    } catch (e: unknown) {
+      globalToast(getErrorMessage(e, "Transaction failed"), "error")
       throw e
     } finally {
       setBusy("")

@@ -520,7 +520,7 @@ export default function AdminPage() {
                       <td style={{ fontWeight: 500 }}>{app.name}</td>
                       <td style={{ color: "var(--text-muted)", fontSize: 13 }}>{app.businessType}</td>
                       <td style={{ fontSize: 13 }}>{app.location}</td>
-                      <td style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" }}>{app.applicant.slice(0, 8)}ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦</td>
+                      <td style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" }}>{app.applicant.slice(0, 8)}...{app.applicant.slice(-6)}</td>
                       <td style={{ fontSize: 12, color: "var(--text-muted)" }}>{new Date(Number(app.appliedAt) * 1000).toLocaleDateString()}</td>
                       <td>
                         <div style={{ display: "flex", gap: 6 }}>
@@ -815,8 +815,8 @@ export default function AdminPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(201,168,76,0.3)")}
                     onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
                   >
-                    <span style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>{cycle.slice(0, 10)}ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦{cycle.slice(-8)}</span>
-                    <span style={{ fontSize: 11, color: "var(--gold)" }}>View ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢</span>
+                    <span style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>{cycle.slice(0, 10)}...{cycle.slice(-8)}</span>
+                    <span style={{ fontSize: 11, color: "var(--gold)" }}>View -&gt;</span>
                   </Link>
                 ))}
               </div>
@@ -825,7 +825,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.type === "success" ? "ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ" : "ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢"} {toast.msg}</div>}
+      {toast && <div className={`toast toast-${toast.type}`}>{toast.type === "success" ? "Success:" : "Error:"} {toast.msg}</div>}
     </div>
   )
 }

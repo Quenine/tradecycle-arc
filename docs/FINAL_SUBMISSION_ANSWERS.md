@@ -65,7 +65,7 @@ TODO: Public GitHub URL
 
 ## 13. Video URL
 
-TODO: 2-3 minute video URL
+TODO: 4-5 minute video URL, unless the official submission form specifies a stricter maximum
 
 ## 14. Circle Product Feedback Location
 

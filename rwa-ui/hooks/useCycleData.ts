@@ -1,9 +1,10 @@
 "use client"
 
-import { useReadContracts } from "wagmi"
+import { useBytecode, useReadContracts } from "wagmi"
 import { CONTRACTS, MILESTONE_LABELS, CYCLE_STATES } from "@/constants/contracts"
 import { PRODUCTION_CYCLE_ABI, CYCLE_SHARE_TOKEN_ABI, YIELD_ORACLE_ABI, VERIFIER_REGISTRY_ABI } from "@/contracts/abis"
 import { stableAmountToNumber } from "@/lib/token-units"
+import { isAddress, type Address } from "viem"
 
 type OracleEstimateResult = {
   expectedRevenue: bigint
@@ -16,6 +17,9 @@ type OracleEstimateResult = {
 
 export interface CycleData {
   address: string
+  validatedAddress?: Address
+  addressState: "invalid" | "loading" | "no-contract" | "read-error" | "partial" | "ready"
+  retry: () => void
   cycleName: string; cycleSymbol: string; category: string; location: string; description: string
   capitalRequired: bigint; totalRaised: bigint
   capitalRequiredUSD: number; totalRaisedUSD: number; progressPct: number
@@ -35,10 +39,14 @@ export interface CycleData {
 }
 
 export function useCycleData(cycleAddress: string): CycleData {
-  const addr = cycleAddress as `0x${string}`
-  const cc   = { address: addr, abi: PRODUCTION_CYCLE_ABI } as const
+  const validatedAddress = isAddress(cycleAddress) ? cycleAddress : undefined
+  const cc = validatedAddress ? { address: validatedAddress, abi: PRODUCTION_CYCLE_ABI } as const : null
+  const { data: bytecode, isLoading: isBytecodeLoading, isError: isBytecodeError, refetch: refetchBytecode } = useBytecode({
+    address: validatedAddress,
+    query: { enabled: !!validatedAddress },
+  })
 
-  const { data, isLoading, isError } = useReadContracts({
+  const { data, isLoading, isError, refetch: refetchEssential } = useReadContracts({
     contracts: [
       { ...cc, functionName: "state" },             // 0
       { ...cc, functionName: "cycleName" },          // 1
@@ -62,7 +70,7 @@ export function useCycleData(cycleAddress: string): CycleData {
       { ...cc, functionName: "milestoneReleased", args: [3] as const }, // 19
       { ...cc, functionName: "operator" },            // 20
     ],
-    query: { enabled: !!cycleAddress, refetchInterval: 8000 },
+    query: { enabled: !!validatedAddress && bytecode !== "0x", refetchInterval: 8000 },
   })
 
   const tokenAddress = (data?.[15]?.result as string) ?? ""
@@ -75,17 +83,26 @@ export function useCycleData(cycleAddress: string): CycleData {
   })
 
   const { data: oracleData } = useReadContracts({
-    contracts: [{ address: CONTRACTS.yieldOracle, abi: YIELD_ORACLE_ABI, functionName: "estimates", args: [addr] }],
-    query: { enabled: !!cycleAddress, refetchInterval: 15000 },
+    contracts: [{ address: CONTRACTS.yieldOracle, abi: YIELD_ORACLE_ABI, functionName: "estimates", args: [validatedAddress!] }],
+    query: { enabled: !!validatedAddress && bytecode !== "0x", refetchInterval: 15000 },
   })
 
   const { data: verifierData } = useReadContracts({
     contracts: [0, 1, 2, 3].flatMap(id => [
-      { address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "approvalCount" as const, args: [addr, id] as [string, number] },
-      { address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "quorumReached"  as const, args: [addr, id] as [string, number] },
+      { address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "approvalCount" as const, args: [validatedAddress!, id] as [Address, number] },
+      { address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "quorumReached"  as const, args: [validatedAddress!, id] as [Address, number] },
     ]),
-    query: { enabled: !!cycleAddress, refetchInterval: 8000 },
+    query: { enabled: !!validatedAddress && bytecode !== "0x", refetchInterval: 8000 },
   })
+
+  const essentialFailures = (data ?? []).slice(0, 15).filter(result => result.status === "failure").length
+  const essentialSuccesses = (data ?? []).slice(0, 15).filter(result => result.status === "success").length
+  const addressState: CycleData["addressState"] = !validatedAddress ? "invalid"
+    : isBytecodeLoading ? "loading"
+    : !bytecode || bytecode === "0x" ? "no-contract"
+    : isBytecodeError || isError || (essentialFailures > 0 && essentialSuccesses === 0) ? "read-error"
+    : essentialFailures > 0 ? "partial" : "ready"
+  const retry = () => { void refetchBytecode(); void refetchEssential() }
 
   const stateId       = Number(data?.[0]?.result ?? 0)
   const capRaw        = (data?.[6]?.result as bigint) ?? 0n
@@ -130,6 +147,9 @@ export function useCycleData(cycleAddress: string): CycleData {
 
   return {
     address:            cycleAddress,
+    validatedAddress,
+    addressState,
+    retry,
     cycleName:          (data?.[1]?.result  as string) ?? "",
     cycleSymbol:        (data?.[2]?.result  as string) ?? "",
     category:           (data?.[3]?.result  as string) ?? "",
@@ -162,7 +182,7 @@ export function useCycleData(cycleAddress: string): CycleData {
     isDefaulted:        stateId === 4,
     milestones,
     oracle,
-    isLoading,
+    isLoading: isLoading || isBytecodeLoading,
     isError,
   }
 }

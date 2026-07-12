@@ -1,6 +1,8 @@
 ﻿# TradeCycle Demo Script
 
-Target length: 2-3 minutes
+Target length: 4-5 minutes, unless the official submission form specifies a stricter maximum.
+
+Pacing: use the first 60-90 seconds for the problem, solution, Arc + USDC, and Credit Passport differentiator. Use the remaining time for the working operator, investor, verifier, repayment, and Credit Passport flow. Link an optional longer technical walkthrough separately if needed.
 
 Scenario: An agricultural exporter needs USDC working capital to fulfill a produce supply order. Investors fund the cycle, verifiers approve production milestones, and repayment updates the SME operator's Credit Passport.
 

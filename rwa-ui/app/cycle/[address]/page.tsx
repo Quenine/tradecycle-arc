@@ -8,6 +8,7 @@ import Navbar from "@/components/navbar"
 import { useCycleData } from "@/hooks/useCycleData"
 import { useMarketOrders } from "@/hooks/useTokenMarketplace"
 import { useWatchedWrite } from "@/hooks/useWatchedWrite"
+import { getErrorMessage } from "@/lib/error-message"
 import { CONTRACTS, NETWORK } from "@/constants/contracts"
 import { PRODUCTION_CYCLE_ABI, VERIFIER_REGISTRY_ABI, CYCLE_SHARE_TOKEN_ABI, COLLATERAL_VAULT_ABI } from "@/contracts/abis"
 import { formatShareAmount, parseStableAmount, stableAmountToNumber } from "@/lib/token-units"
@@ -32,6 +33,10 @@ function TxBtn({ label, pending, onClick, disabled, style, danger }: {
       onClick={go} disabled={disabled || running}
     >{running ? pending : label}</button>
   )
+}
+
+function CycleState({ title, message, onRetry }: { title: string; message: string; onRetry?: () => void }) {
+  return <div style={{ minHeight:"100vh", background:"var(--bg-void)" }}><Navbar /><main style={{ maxWidth:640, margin:"90px auto", padding:"0 24px", textAlign:"center" }}><h1 style={{ fontFamily:"var(--font-display)", fontSize:30, fontWeight:400, marginBottom:12 }}>{title}</h1><p style={{ color:"var(--text-muted)", lineHeight:1.7, marginBottom:24 }}>{message}</p><div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>{onRetry && <button className="btn-primary" onClick={onRetry}>Retry</button>}<Link href="/" className="btn-ghost" style={{ textDecoration:"none" }}>Back to Explore</Link></div></main></div>
 }
 
 export default function CycleDetailPage() {
@@ -70,7 +75,7 @@ export default function CycleDetailPage() {
 
   const { data: opData } = useReadContracts({
     contracts: [
-      { address: cycleAddress as `0x${string}`, abi: PRODUCTION_CYCLE_ABI, functionName: "operator" },
+      { address: cycle.validatedAddress!, abi: PRODUCTION_CYCLE_ABI, functionName: "operator" },
     ],
     query: { refetchInterval: 10000 },
   })
@@ -100,9 +105,9 @@ export default function CycleDetailPage() {
   }, [cycle.isActive, cycle.startTime, cycle.duration])
 
   async function addToken() {
-    if (typeof window === "undefined" || !(window as any).ethereum || !cycle.tokenAddress) return
+    if (typeof window === "undefined" || !window.ethereum || !cycle.tokenAddress) return
     try {
-      await (window as any).ethereum.request({
+      await window.ethereum.request({
         method: "wallet_watchAsset",
         params: { type: "ERC20", options: { address: cycle.tokenAddress, symbol: cycle.cycleSymbol.slice(0,11), decimals: 6 } },
       })
@@ -113,55 +118,55 @@ export default function CycleDetailPage() {
     if (!wallet || !investAmount) return
     const amt = parseStableAmount(investAmount)
     try {
-      await approve(CONTRACTS.stablecoin, cycleAddress as `0x${string}`)
-      const hash = await send({ address: cycleAddress as `0x${string}`, abi: PRODUCTION_CYCLE_ABI, functionName: "invest", args: [amt] })
+      await approve(CONTRACTS.stablecoin, cycle.validatedAddress!)
+      const hash = await send({ address: cycle.validatedAddress!, abi: PRODUCTION_CYCLE_ABI, functionName: "invest", args: [amt] })
       showToast(`Invested $${investAmount}! ${cycle.cycleSymbol} tokens are in your wallet.`, "success", hash)
       setInvestAmount(""); refetchExtra(); setTimeout(addToken, 800)
-    } catch (e: any) { showToast(e?.shortMessage ?? e?.message ?? "Investment failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Investment failed"), "error") }
   }
 
   async function handleApproveMilestone(id: number) {
     try {
-      const hash = await send({ address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "approveMilestone", args: [cycleAddress as `0x${string}`, id] })
+      const hash = await send({ address: CONTRACTS.verifierRegistry, abi: VERIFIER_REGISTRY_ABI, functionName: "approveMilestone", args: [cycle.validatedAddress!, id] })
       showToast(`Milestone ${id === 99 ? "harvest" : id + 1} approved!`, "success", hash)
-    } catch (e: any) { showToast(e?.shortMessage ?? "Approval failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Approval failed"), "error") }
   }
 
   async function handleReleaseMilestone(id: number) {
     try {
-      const hash = await send({ address: cycleAddress as `0x${string}`, abi: PRODUCTION_CYCLE_ABI, functionName: "releaseMilestone", args: [id] })
+      const hash = await send({ address: cycle.validatedAddress!, abi: PRODUCTION_CYCLE_ABI, functionName: "releaseMilestone", args: [id] })
       showToast(`Milestone ${id + 1} — capital released to your wallet!`, "success", hash)
-    } catch (e: any) { showToast(e?.shortMessage ?? "Release failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Release failed"), "error") }
   }
 
   async function handleSubmitHarvest() {
     try {
-      const hash = await send({ address: cycleAddress as `0x${string}`, abi: PRODUCTION_CYCLE_ABI, functionName: "submitHarvest" })
+      const hash = await send({ address: cycle.validatedAddress!, abi: PRODUCTION_CYCLE_ABI, functionName: "submitHarvest" })
       showToast("Harvest submitted! Cycle in settlement state.", "success", hash)
-    } catch (e: any) { showToast(e?.shortMessage ?? "Failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Failed"), "error") }
   }
 
   async function handleRepayAndDistribute() {
     const amt = cycle.expectedRevenue
     if (amt <= 0n) return
     try {
-      await approve(CONTRACTS.stablecoin, cycleAddress as `0x${string}`)
+      await approve(CONTRACTS.stablecoin, cycle.validatedAddress!)
       const hash = await send({
-        address: cycleAddress as `0x${string}`,
+        address: cycle.validatedAddress!,
         abi: PRODUCTION_CYCLE_ABI,
         functionName: "repayAndDistribute",
         args: [amt],
       })
       showToast("Capital distributed. Investors can now withdraw. Collateral is either auto-refunded to your wallet or remains withdrawable from the vault if auto-release was skipped.", "success", hash)
-    } catch (e: any) { showToast(e?.shortMessage ?? e?.message ?? "Distribution failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Distribution failed"), "error") }
   }
 
   async function handleWithdraw() {
     try {
-      const hash = await send({ address: cycleAddress as `0x${string}`, abi: PRODUCTION_CYCLE_ABI, functionName: "withdraw" })
+      const hash = await send({ address: cycle.validatedAddress!, abi: PRODUCTION_CYCLE_ABI, functionName: "withdraw" })
       showToast("Withdrawn! Principal + yield sent to your wallet.", "success", hash)
       refetchExtra()
-    } catch (e: any) { showToast(e?.shortMessage ?? "Withdrawal failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Withdrawal failed"), "error") }
   }
 
   async function handleWithdrawCollateral() {
@@ -172,17 +177,21 @@ export default function CycleDetailPage() {
         args: [parseStableAmount(operatorCollateral.toFixed(6))],
       })
       showToast(`$${operatorCollateral.toLocaleString(undefined, { maximumFractionDigits: 0 })} collateral returned to your wallet!`, "success", hash)
-    } catch (e: any) { showToast(e?.shortMessage ?? "Withdrawal failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Withdrawal failed"), "error") }
   }
 
   async function handleTriggerDefault() {
     try {
-      const hash = await send({ address: cycleAddress as `0x${string}`, abi: PRODUCTION_CYCLE_ABI, functionName: "triggerDefault" })
+      const hash = await send({ address: cycle.validatedAddress!, abi: PRODUCTION_CYCLE_ABI, functionName: "triggerDefault" })
       showToast("Default triggered — collateral slashed.", "success", hash)
-    } catch (e: any) { showToast(e?.shortMessage ?? "Failed", "error") }
+    } catch (e: unknown) { showToast(getErrorMessage(e, "Failed"), "error") }
   }
 
-  if (cycle.isLoading) return (
+  if (cycle.addressState === "invalid") return <CycleState title="Invalid cycle address" message="The URL does not contain a valid EVM address." />
+  if (cycle.addressState === "no-contract") return <CycleState title="Cycle unavailable" message="No contract bytecode exists at this address on Arc Testnet." />
+  if (cycle.addressState === "read-error") return <CycleState title="Cycle data unavailable" message="Essential onchain cycle data could not be read. The RPC may be temporarily unavailable." onRetry={cycle.retry} />
+
+  if (cycle.isLoading || cycle.addressState === "loading") return (
     <div style={{ minHeight: "100vh", background: "var(--bg-void)" }}>
       <Navbar />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
@@ -209,7 +218,8 @@ export default function CycleDetailPage() {
           {" / "}<span style={{ color: "var(--text-primary)" }}>{cycle.cycleName || cycleAddress.slice(0,14) + "…"}</span>
         </p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20, alignItems: "start" }}>
+        {cycle.addressState === "partial" && <div className="card" style={{ padding:12, marginBottom:16, color:"var(--warning)" }}>Some secondary cycle data is temporarily unavailable. Core cycle data is shown below.</div>}
+        <div className="cycle-layout responsive-grid" style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20, alignItems: "start" }}>
           {/* LEFT */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
@@ -240,7 +250,7 @@ export default function CycleDetailPage() {
             </div>
 
             {/* Stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+            <div className="cycle-stats responsive-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
               {[
                 { label: "Net ROI",      value: netROI > 0 ? `${netROI}%` : grossROI > 0 ? `${grossROI}%` : "—", color: "var(--emerald)" },
                 { label: "Duration",     value: cycle.durationDays > 0 ? `${cycle.durationDays}d` : "—", color: "var(--text-primary)" },
@@ -263,7 +273,7 @@ export default function CycleDetailPage() {
                     {cycle.oracle?.exists ? "On-chain oracle" : "Operator-stated"}
                   </span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 10 }}>
+                <div className="cycle-yield responsive-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 10 }}>
                   {[
                     { label: "Expected revenue", value: revUSD > 0 ? `$${revUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—" },
                     { label: "Gross profit",     value: cycle.capitalRequiredUSD > 0 && revUSD > cycle.capitalRequiredUSD ? `$${(revUSD - cycle.capitalRequiredUSD).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—" },
@@ -362,7 +372,7 @@ export default function CycleDetailPage() {
           </div>
 
           {/* RIGHT — sticky action panel */}
-          <div style={{ position: "sticky", top: 76, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="cycle-actions" style={{ position: "sticky", top: 76, display: "flex", flexDirection: "column", gap: 14 }}>
 
             {/* Investor position */}
             {wallet && myBal > 0n && (
