@@ -2,7 +2,7 @@
 
 ## Project title
 
-TradeCycle â€” USDC milestone finance for SMEs on Arc
+TradeCycle - USDC milestone finance for SMEs on Arc
 
 ## Project description
 
